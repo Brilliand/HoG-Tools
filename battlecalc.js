@@ -19,11 +19,13 @@ document.addEventListener("DOMContentLoaded", function() {
 		return 1 - 1 / (1 + Math.log(1 + armor / 1E4) / Math.log(2));
 	}
 	function shipSummary(ship) {
+		var armorInv = arr(document.getElementsByName("armor")).map(function(input) { return input.value; }).reduce(function(a, b) { return a + b; });
+		var armorMult = 1 + armorInv / 2e6;
 		return beautyObj({
 			Power: ship.power,
 			Armor: ship.armor,
 			HPs: ship.hp,
-			"Dmg Reduction": (dmgred(ship.armor) * 100).toFixed(2) + "%",
+			"Dmg Reduction": (dmgred(ship.armor * armorMult) * 100).toFixed(2) + "%",
 			Speed: ship.speed,
 			Weight: ship.weight,
 		});
