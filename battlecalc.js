@@ -84,7 +84,8 @@ document.addEventListener("DOMContentLoaded", function() {
 		input.min = 0;
 		input.name = name;
 		input.resource = resource;
-		return div(span(txt(name)), input);
+		input.showValue = span();
+		return div(span(txt(name)), input, input.showValue);
 	}).map(appendTo(stufflist));
 	["artofwar"].map(function(name) {
 		var research = researches[researchesName[name]];
@@ -96,6 +97,13 @@ document.addEventListener("DOMContentLoaded", function() {
 		input.research = research;
 		return div(span(txt(research.name)), input);
 	}).map(appendTo(stufflist));
+	var calcBonus = {
+		"ammunition": function(v) { return 10 * Math.log(1 + v / 1E7)/Math.log(2); },
+		"u-ammunition": function(v) { return 20 * Math.log(1 + v / 1E7)/Math.log(2); },
+		"t-ammunition": function(v) { return 60 * Math.log(1 + v / 2E7)/Math.log(2); },
+		"armor": function(v) { return v / 2e6; },
+		"engine": function(v) { return v / 5e6; },
+	};
 
 	var enemylist = document.getElementById("enemylist");
 	var enemypicker = el("select");
@@ -135,6 +143,7 @@ document.addEventListener("DOMContentLoaded", function() {
 		arr(stufflist.getElementsByTagName("input")).map(function(input) {
 			if(input.resource) {
 				warfleet.storage[input.resource.id] = Number(input.value);
+				input.showValue.innerText = "+"+beauty(calcBonus[input.resource.name](warfleet.storage[input.resource.id])) + "x";
 			} else if(input.research) {
 				var newLevel = Number(input.value);
 				while(input.research.level > newLevel) { input.research.level--; input.research.unbonus(); }
