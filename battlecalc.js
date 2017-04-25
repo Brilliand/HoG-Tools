@@ -67,12 +67,22 @@ document.addEventListener("DOMContentLoaded", function() {
 		return row;
 	}
 
+	var saveData = JSON.parse(localStorage.getItem("battlecalc-persist")) || {};
+
 	var shiplist = document.getElementById("shiplist");
 	var available_ships = ships.slice();
-	game.ships.map(function(ship, k) {
-		if(ship.type === "Colonial Ship" || ship.type === "Cargoship") return;
-		shiplist.appendChild(shipinput(ship));
+	game.ships.map(function(ship) {
+		var n;
+		if(saveData.ships && saveData.ships[ship.id]) n = saveData.ships[ship.id];
+		else if(ship.type === "Colonial Ship" || ship.type === "Cargoship") return;
+		shiplist.appendChild(shipinput(ship, n));
 		delete available_ships[ship.id];
+	});
+	saveData.ships && Object.keys(saveData.ships).map(function(k) {
+		if(!available_ships[k]) return;
+		var n = saveData.ships[k];
+		shiplist.appendChild(shipinput(ships[k], n));
+		delete available_ships[k];
 	});
 	shiplist.appendChild(shipselector());
 
@@ -83,6 +93,7 @@ document.addEventListener("DOMContentLoaded", function() {
 		input.type = "number";
 		input.min = 0;
 		input.name = name;
+		if(saveData.bonuses && saveData.bonuses[name]) input.value = saveData.bonuses[name];
 		input.resource = resource;
 		input.showValue = span();
 		return div(span(txt(name)), input, input.showValue);
@@ -94,6 +105,7 @@ document.addEventListener("DOMContentLoaded", function() {
 		input.min = 0;
 		input.max = 100;
 		input.name = name;
+		if(saveData.bonuses && saveData.bonuses[name]) input.value = saveData.bonuses[name];
 		input.research = research;
 		return div(span(txt(research.name)), input);
 	}).map(appendTo(stufflist));
@@ -136,16 +148,21 @@ document.addEventListener("DOMContentLoaded", function() {
 
 	var battlereport = document.getElementById("battlereport");
 	document.getElementById("battlecalc").onchange = function() {
+		saveData = {
+			ships: {},
+			bonuses: {},
+		};
+
 		var warfleet = new Fleet(0, "Simulation");
 		arr(shiplist.getElementsByTagName("input")).map(function(input) {
-			if(input.value > 0) warfleet.ships[input.ship.id] = Number(input.value);
+			if(input.value > 0) warfleet.ships[input.ship.id] = saveData.ships[input.ship.id] = Number(input.value);
 		});
 		arr(stufflist.getElementsByTagName("input")).map(function(input) {
 			if(input.resource) {
-				warfleet.storage[input.resource.id] = Number(input.value);
+				warfleet.storage[input.resource.id] = saveData.bonuses[input.name] = Number(input.value);
 				input.showValue.innerText = "+"+beauty(calcBonus[input.resource.name](warfleet.storage[input.resource.id])) + "x";
 			} else if(input.research) {
-				var newLevel = Number(input.value);
+				var newLevel = saveData.bonuses[input.name] = Number(input.value);
 				while(input.research.level > newLevel) { input.research.level--; input.research.unbonus(); }
 				while(input.research.level < newLevel) { input.research.level++; input.research.bonus(); }
 			}
@@ -164,5 +181,7 @@ document.addEventListener("DOMContentLoaded", function() {
 			input.showLosses.innerText = enemy.ships[input.ship.id];
 		});
 		enemylist.dataset.weightRemaining = enemy.weight();
+
+		localStorage.setItem("battlecalc-persist", JSON.stringify(saveData));
 	};
 });
