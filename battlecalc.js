@@ -67,7 +67,10 @@ document.addEventListener("DOMContentLoaded", function() {
 		return row;
 	}
 
-	var saveData = JSON.parse(localStorage.getItem("battlecalc-persist")) || {};
+	var saveData = JSON.parse(window.location.hash.substring(1) || localStorage.getItem("battlecalc-persist")) || {};
+	if(window.location.hash) {
+		window.history.replaceState({}, document.title, window.location.pathname);
+	}
 
 	var shiplist = document.getElementById("shiplist");
 	var available_ships = ships.slice();
@@ -132,6 +135,7 @@ document.addEventListener("DOMContentLoaded", function() {
 	});
 	arr(enemypicker.options).sort(function(a, b) { return a.fleet.value() - b.fleet.value(); }).map(appendTo(enemypicker));
 	enemylist.parentNode.insertBefore(div(span(txt("Enemy Fleet")), enemypicker), enemylist);
+	if(saveData.enemySelected) enemypicker.selectedIndex = saveData.enemySelected;
 	enemypicker.onchange = function() {
 		var i = enemypicker.selectedIndex;
 		if(i == -1) return;
@@ -145,12 +149,25 @@ document.addEventListener("DOMContentLoaded", function() {
 		});
 	};
 	enemypicker.onchange();
+	if(saveData.enemies) {
+		arr(enemylist.getElementsByTagName("input")).map(function(input) {
+			input.value = saveData.enemies[input.ship.id];
+			delete saveData.enemies[input.ship.id];
+		});
+		Object.keys(saveData.enemies).map(function(k) {
+			if(!ships[k]) return;
+			var n = saveData.enemies[k];
+			enemylist.appendChild(shipinput(ships[k], n));
+		});
+	}
 
 	var battlereport = document.getElementById("battlereport");
-	document.getElementById("battlecalc").onchange = function() {
+	var exporter = document.getElementById("exporter");
+	var update = document.getElementById("battlecalc").onchange = function() {
 		saveData = {
 			ships: {},
 			bonuses: {},
+			enemies: {},
 		};
 
 		var warfleet = new Fleet(0, "Simulation");
@@ -168,8 +185,9 @@ document.addEventListener("DOMContentLoaded", function() {
 			}
 		});
 		var enemy = new Fleet(1, "Test Dummy");
+		saveData.enemySelected = enemypicker.selectedIndex;
 		arr(enemylist.getElementsByTagName("input")).map(function(input) {
-			if(input.value > 0) enemy.ships[input.ship.id] = Number(input.value);
+			if(input.value > 0) enemy.ships[input.ship.id] = saveData.enemies[input.ship.id] = Number(input.value);
 		});
 		battlereport.innerHTML = enemy.battle(warfleet).r;
 		arr(shiplist.getElementsByTagName("input")).map(function(input) {
@@ -182,6 +200,10 @@ document.addEventListener("DOMContentLoaded", function() {
 		});
 		enemylist.dataset.weightRemaining = enemy.weight();
 
-		localStorage.setItem("battlecalc-persist", JSON.stringify(saveData));
+		var strSaveData = JSON.stringify(saveData);
+		var basePath = location.protocol+'//'+location.host+location.pathname;
+		exporter.href = exporter.firstChild.alt = basePath+"#"+strSaveData;
+		localStorage.setItem("battlecalc-persist", strSaveData);
 	};
+	update();
 });

@@ -44,6 +44,12 @@ h2 {
 	background: red;
 }
 
+#exporter {
+	position: absolute;
+	top: 0;
+	right: 0;
+}
+
 #battlereport {
 	background: #333;
 	margin: 2em;
