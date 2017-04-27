@@ -44,6 +44,22 @@ h2 {
 	background: red;
 }
 
+.statblock {
+	float: left;
+	margin-top: 1em;
+	width: 50%;
+	text-align: left;
+	white-space: pre-wrap;
+}
+
+.tablelike[data-weight-remaining] ~ .outcome {
+	background: green;
+}
+
+.tablelike[data-weight-remaining="0"] ~ .outcome {
+	background: red;
+}
+
 #exporter {
 	position: absolute;
 	top: 0;

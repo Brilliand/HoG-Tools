@@ -51,6 +51,11 @@ document.addEventListener("DOMContentLoaded", function() {
 	function dmgred(armor) {
 		return 1 - 1 / (1 + Math.log(1 + armor / 1E4) / Math.log(2));
 	}
+	function speedred(def, atk, weight) {
+		var a = def / atk * 4.6 / Math.log(weight) - 2;
+		var b = 2 * a / (1 + Math.abs(2 * a));
+		return .5 * (1.1 - .9 * b);
+	}
 	function shipSummary(ship) {
 		var armorInv = arr(document.getElementsByName("armor")).map(function(input) { return input.value; }).reduce(function(a, b) { return a + b; });
 		var armorMult = 1 + armorInv / 2e6;
@@ -62,6 +67,56 @@ document.addEventListener("DOMContentLoaded", function() {
 			Speed: ship.speed,
 			Weight: ship.weight,
 		});
+	}
+	function fleetStats(fleet) {
+		var power = 0,
+		    armor = 0,
+		    hp = 0,
+		    threat = 0,
+		    toughness = 0,
+		    speedpower = 0,
+		    speedtough = 0,
+		    rawpower = 0,
+		    rawtough = 0;
+		var powermult = 1,
+		    armormult = 1,
+		    speedmult = 1;
+		["ammunition", "u-ammunition", "t-ammunition"].map(function(name) {
+			var resource = resourcesName[name];
+			powermult += calcBonus[name](fleet.storage[resource.id]);
+		});
+		["armor"].map(function(name) {
+			var resource = resourcesName[name];
+			armormult += calcBonus[name](fleet.storage[resource.id]);
+		});
+		["engine"].map(function(name) {
+			var resource = resourcesName[name];
+			speedmult += calcBonus[name](fleet.storage[resource.id]);
+		});
+		fleet.ships.map(function(n, k) {
+			if(n == 0) return;
+			var ship = ships[k];
+			power += n * ship.power * powermult;
+			armor += n * ship.armor * armormult;
+			hp += n * ship.hp;
+			var shiptough = ship.hp / (1 - dmgred(ship.armor * armormult));
+			threat += (n+1) * ship.power * powermult * (.5 * (1.1 - .9 * 0.8));
+			toughness += n * shiptough / (.5 * (1.1 - .9 * 0.8));
+			speedpower += (n+1) * ship.power * powermult * speedred(1, ship.speed * speedmult, 100000);
+			speedtough += n * shiptough / speedred(ship.speed * speedmult, 1, ship.weight);
+			rawpower += (n+1) * ship.power * speedred(1, ship.speed, 100000);
+			rawtough += n * ship.hp / (1 - dmgred(ship.armor)) / speedred(ship.speed, 1, ship.weight);
+		});
+		return {
+			Power: power,
+			Armor: armor,
+			HP: hp,
+			Toughness: toughness,
+			"Speed Adjustment": (Math.sqrt(speedpower * speedtough || 1) / Math.sqrt(threat * toughness || 1) * 100).toFixed(2)+"%",
+			"Ship Value": Math.sqrt(rawpower * rawtough),
+			"Inventory Adjustment": "x"+beauty(Math.sqrt(speedpower * speedtough || 1) / Math.sqrt(rawpower * rawtough || 1)),
+			Value: Math.sqrt(speedpower * speedtough),
+		};
 	}
 	function shipinput(ship, n) {
 		var label = span(txt(ship.name));
@@ -128,6 +183,13 @@ document.addEventListener("DOMContentLoaded", function() {
 	});
 	shiplist.appendChild(shipselector());
 
+	shiplist.statBlock = span();
+	shiplist.statBlock.className = "statblock";
+	shiplist.parentNode.appendChild(shiplist.statBlock);
+	shiplist.statBlockAfter = span();
+	shiplist.statBlockAfter.className = "statblock outcome";
+	shiplist.parentNode.appendChild(shiplist.statBlockAfter);
+
 	var stufflist = document.getElementById("stufflist");
 	["ammunition", "u-ammunition", "t-ammunition", "armor", "engine"].map(function(name) {
 		var resource = resourcesName[name];
@@ -172,7 +234,7 @@ document.addEventListener("DOMContentLoaded", function() {
 			enemypicker.appendChild(option);
 		}
 	});
-	arr(enemypicker.options).sort(function(a, b) { return a.fleet.value() - b.fleet.value(); }).map(appendTo(enemypicker));
+	arr(enemypicker.options).sort(function(a, b) { return fleetStats(a.fleet).Value - fleetStats(b.fleet).Value; }).map(appendTo(enemypicker));
 	enemylist.parentNode.insertBefore(div(span(txt("Enemy Fleet")), enemypicker), enemylist);
 	if(saveData.enemySelected) enemypicker.selectedIndex = saveData.enemySelected;
 	enemypicker.onchange = function() {
@@ -199,6 +261,13 @@ document.addEventListener("DOMContentLoaded", function() {
 			enemylist.appendChild(shipinput(ships[k], n));
 		});
 	}
+
+	enemylist.statBlock = span();
+	enemylist.statBlock.className = "statblock";
+	enemylist.parentNode.appendChild(enemylist.statBlock);
+	enemylist.statBlockAfter = span();
+	enemylist.statBlockAfter.className = "statblock outcome";
+	enemylist.parentNode.appendChild(enemylist.statBlockAfter);
 
 	window.onhashchange = function() {
 		saveData = deserialize(window.location.hash.substring(1)) || {};
@@ -247,28 +316,34 @@ document.addEventListener("DOMContentLoaded", function() {
 		});
 		arr(stufflist.getElementsByTagName("input")).map(function(input) {
 			if(input.resource) {
-				warfleet.storage[input.resource.id] = saveData.bonuses[input.name] = Number(input.value);
+				warfleet.storage[input.resource.id] = Number(input.value);
 				input.showValue.innerText = "+"+beauty(calcBonus[input.resource.name](warfleet.storage[input.resource.id])) + "x";
 			} else if(input.research) {
-				var newLevel = saveData.bonuses[input.name] = Number(input.value);
+				var newLevel = Number(input.value);
 				while(input.research.level > newLevel) { input.research.level--; input.research.unbonus(); }
 				while(input.research.level < newLevel) { input.research.level++; input.research.bonus(); }
 			}
+			if(input.value > 0) saveData.bonuses[input.name] = Number(input.value);
 		});
+		shiplist.statBlock.innerText = beautyObj(fleetStats(warfleet));
 		var enemy = new Fleet(1, "Test Dummy");
 		saveData.enemySelected = enemypicker.selectedIndex;
 		arr(enemylist.getElementsByTagName("input")).map(function(input) {
 			if(input.value > 0) enemy.ships[input.ship.id] = saveData.enemies[input.ship.id] = Number(input.value);
 		});
+		enemylist.statBlock.innerText = beautyObj(fleetStats(enemy));
+
 		battlereport.innerHTML = enemy.battle(warfleet).r;
 		arr(shiplist.getElementsByTagName("input")).map(function(input) {
 			if(input.type === "button") return;
 			input.showLosses.innerText = warfleet.ships[input.ship.id];
 		});
+		shiplist.statBlockAfter.innerText = beautyObj(fleetStats(warfleet));
 		shiplist.dataset.weightRemaining = warfleet.weight();
 		arr(enemylist.getElementsByTagName("input")).map(function(input) {
 			input.showLosses.innerText = enemy.ships[input.ship.id];
 		});
+		enemylist.statBlockAfter.innerText = beautyObj(fleetStats(enemy));
 		enemylist.dataset.weightRemaining = enemy.weight();
 
 		var basePath = location.protocol+'//'+location.host+location.pathname;
