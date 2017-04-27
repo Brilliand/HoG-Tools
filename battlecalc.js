@@ -7,6 +7,39 @@ document.addEventListener("DOMContentLoaded", function() {
 	function span() { return el("span", arr(arguments)); }
 	function label() { return el("label", arr(arguments)); }
 
+	function serialize(obj) {
+		return Object.keys(obj).map(function(k) {
+			if(typeof obj[k] === "object") {
+				section = obj[k];
+				v = Object.keys(obj[k]).map(function(k) {
+					return k+":"+section[k];
+				}).join(",");
+			} else {
+				v = obj[k];
+			}
+			return k+"="+v;
+		}).join("&");
+	}
+	function deserialize(str) {
+		if(!str) return null;
+		var data = str.split("&").map(function(str) {
+			var parts = str.split("=", 2);
+			if(parts[1].indexOf(":") != -1) {
+				parts[1] = parts[1].split(",").map(function(str) {
+					return str.split(":", 2);
+				}).reduce(function(obj, add) {
+					obj[add[0]] = add[1];
+					return obj;
+				}, {})
+			}
+			return parts;
+		}).reduce(function(obj, add) {
+			obj[add[0]] = add[1];
+			return obj;
+		}, {});
+		if(data.ships) return data;
+		return null;
+	}
 	function beautyObj(obj) {
 		var a = [];
 		for(var k in obj) {
@@ -67,7 +100,13 @@ document.addEventListener("DOMContentLoaded", function() {
 		return row;
 	}
 
-	var saveData = JSON.parse(window.location.hash.substring(1) || localStorage.getItem("battlecalc-persist")) || {};
+	var saveData;
+	try {
+		saveData = deserialize(window.location.hash.substring(1)) || JSON.parse(localStorage.getItem("battlecalc-persist")) || {};
+	} catch(e) {
+		console.log(e);
+		saveData = {};
+	};
 	if(window.location.hash) {
 		window.history.replaceState({}, document.title, window.location.pathname);
 	}
@@ -161,6 +200,38 @@ document.addEventListener("DOMContentLoaded", function() {
 		});
 	}
 
+	window.onhashchange = function() {
+		saveData = deserialize(window.location.hash.substring(1)) || {};
+
+		saveData.ships && arr(shiplist.getElementsByTagName("input")).map(function(input) {
+			input.value = saveData.ships[input.ship.id];
+		});
+		saveData.ships && Object.keys(saveData.ships).map(function(k) {
+			if(!available_ships[k]) return;
+			var n = saveData.ships[k];
+			shiplist.appendChild(shipinput(ships[k], n));
+			delete available_ships[k];
+		});
+		saveData.bonuses && arr(stufflist.getElementsByTagName("input")).map(function(input) {
+			input.value = saveData.bonuses[input.name];
+		});
+		if(saveData.enemySelected) {
+			enemypicker.selectedIndex = saveData.enemySelected;
+			enemypicker.onchange();
+		}
+		saveData.enemies && arr(enemylist.getElementsByTagName("input")).map(function(input) {
+			input.value = saveData.enemies[input.ship.id];
+			delete saveData.enemies[input.ship.id];
+		});
+		saveData.enemies && Object.keys(saveData.enemies).map(function(k) {
+			if(!ships[k]) return;
+			var n = saveData.enemies[k];
+			enemylist.appendChild(shipinput(ships[k], n));
+		});
+		window.history.replaceState({}, document.title, window.location.pathname);
+		update();
+	};
+
 	var battlereport = document.getElementById("battlereport");
 	var exporter = document.getElementById("exporter");
 	var update = document.getElementById("battlecalc").onchange = function() {
@@ -200,10 +271,9 @@ document.addEventListener("DOMContentLoaded", function() {
 		});
 		enemylist.dataset.weightRemaining = enemy.weight();
 
-		var strSaveData = JSON.stringify(saveData);
 		var basePath = location.protocol+'//'+location.host+location.pathname;
-		exporter.href = exporter.firstChild.alt = basePath+"#"+strSaveData;
-		localStorage.setItem("battlecalc-persist", strSaveData);
+		exporter.href = exporter.firstChild.alt = basePath+"#"+serialize(saveData);
+		localStorage.setItem("battlecalc-persist", JSON.stringify(saveData));
 	};
 	update();
 });
