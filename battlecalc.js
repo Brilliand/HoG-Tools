@@ -85,6 +85,7 @@ document.addEventListener("DOMContentLoaded", function() {
 			var resource = resourcesName[name];
 			powermult += calcBonus[name](fleet.storage[resource.id]);
 		});
+		powermult *= (1 + .1 * Math.log(1 + fleet.ships[14]) / Math.log(2));
 		["armor"].map(function(name) {
 			var resource = resourcesName[name];
 			armormult += calcBonus[name](fleet.storage[resource.id]);
@@ -100,8 +101,8 @@ document.addEventListener("DOMContentLoaded", function() {
 			armor += n * ship.armor * armormult;
 			hp += n * ship.hp;
 			var shiptough = ship.hp / (1 - dmgred(ship.armor * armormult));
-			threat += (n+1) * ship.power * powermult * (.5 * (1.1 - .9 * 0.8));
-			toughness += n * shiptough / (.5 * (1.1 - .9 * 0.8));
+			threat += (n+1) * ship.power * powermult * (.5 * (1.1 + .9 * 0.8));
+			toughness += n * shiptough / (.5 * (1.1 + .9 * 0.8));
 			speedpower += (n+1) * ship.power * powermult * speedred(1, ship.speed * speedmult, 100000);
 			speedtough += n * shiptough / speedred(ship.speed * speedmult, 1, ship.weight);
 			rawpower += (n+1) * ship.power * speedred(1, ship.speed, 100000);
