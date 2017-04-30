@@ -1,4 +1,6 @@
 document.addEventListener("DOMContentLoaded", function() {
+	'use strict';
+
 	function arr(v) { return Array.prototype.slice.call(v); }
 	function appendTo(a) { return function(b) { return a.appendChild(b); }; }
 	function el(tag, contents) { var el = document.createElement(tag); if(contents) contents.map(appendTo(el)); return el; }
@@ -9,8 +11,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
 	function serialize(obj) {
 		return Object.keys(obj).map(function(k) {
+			var v;
 			if(typeof obj[k] === "object") {
-				section = obj[k];
+				var section = obj[k];
 				v = Object.keys(obj[k]).map(function(k) {
 					return k+":"+section[k];
 				}).join(",");
