@@ -70,6 +70,13 @@ input:invalid {
 	right: 0;
 }
 
+#nextrun {
+	position: absolute;
+	top: 32px;
+	right: 0;
+	transform: scaleX(-1);
+}
+
 #battlereport {
 	background: #333;
 	margin: 2em;

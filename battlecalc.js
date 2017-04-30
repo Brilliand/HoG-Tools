@@ -37,7 +37,7 @@ document.addEventListener("DOMContentLoaded", function() {
 			obj[add[0]] = add[1];
 			return obj;
 		}, {});
-		if(data.ships) return data;
+		if(data.ships || data.enemies) return data;
 		return null;
 	}
 	function beautyObj(obj) {
@@ -262,7 +262,7 @@ document.addEventListener("DOMContentLoaded", function() {
 	enemypicker.onchange();
 	if(saveData.enemies) {
 		arr(enemylist.getElementsByTagName("input")).map(function(input) {
-			input.value = saveData.enemies[input.ship.id];
+			input.value = saveData.enemies[input.ship.id] || "";
 			delete saveData.enemies[input.ship.id];
 		});
 		Object.keys(saveData.enemies).map(function(k) {
@@ -315,6 +315,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
 	var battlereport = document.getElementById("battlereport");
 	var exporter = document.getElementById("exporter");
+	var nextrun = document.getElementById("nextrun");
+	if(saveData.runid) nextrun.target = saveData.runid+"+";
 	var update = document.getElementById("battlecalc").onchange = function() {
 		saveData = {
 			ships: {},
@@ -364,6 +366,24 @@ document.addEventListener("DOMContentLoaded", function() {
 		var basePath = location.protocol+'//'+location.host+location.pathname;
 		exporter.href = exporter.firstChild.alt = basePath+"#"+serialize(saveData);
 		localStorage.setItem("battlecalc-persist", JSON.stringify(saveData));
+
+		nextrun.href = basePath+"#"+serialize({
+			ships: warfleet.ships.reduce(function(obj, v, k) { if(v > 0) obj[k] = v; return obj; }, {}),
+			bonuses: ["artofwar"].reduce(function(obj, name) {
+				var research = researches[researchesName[name]];
+				if(!research.requirement()) return obj;
+				obj[name] = research.level;
+				return obj;
+			}, (warfleet.weight() ? ["ammunition", "u-ammunition", "t-ammunition", "armor", "engine"] : []).reduce(function(obj, name) {
+				var resource = resourcesName[name];
+				var v = warfleet.storage[resource.id];
+				if(v > 0) obj[name] = v;
+				return obj;
+			}, {})),
+			enemySelected: enemypicker.selectedIndex + (enemy.weight() ? 0 : 1),
+			enemies: enemy.ships.reduce(function(obj, v, k) { if(v > 0) obj[k] = v; return obj; }, {}),
+			runid: nextrun.target,
+		});
 	};
 	update();
 });
