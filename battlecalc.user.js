@@ -29,8 +29,13 @@
 	var observer = new MutationObserver(function(mutation) {
 		if(document.getElementById("battlecalc_button")) return;
 		var parts = currentFleetId.split("_");
-		var fleet = planets[parts[0]].fleets[parts[1]];
-		var enemyFleet = Object.values(planets[parts[0]].fleets).filter(function(v) { return v.weight() && v.civis != game.id; })[0];
+		var planet = planets[parts[0]];
+		var fleet = planet.fleets[parts[1]];
+		var enemyFleetId = Object.keys(planet.fleets).filter(function(k) {
+			var fleet = planet.fleets[k];
+			return fleet.weight() && fleet.civis != game.id;
+		})[0];
+		var enemyFleet = planet.fleets[enemyFleetId];
 		if(!fleet || !enemyFleet || fleet.civis != game.id) return;
 
 		var calcData = {
@@ -46,7 +51,7 @@
 				if(v > 0) obj[name] = v;
 				return obj;
 			}, {})),
-			enemySelected: -1,
+			enemySelected: planet.id + "_" + enemyFleetId,
 			enemies: enemyFleet.ships.reduce(function(obj, v, k) { if(v > 0) obj[k] = v; return obj; }, {}),
 		};
 		var url = "https://brilliand.github.io/HoG-Tools/battlecalc.html#"+serialize(calcData);

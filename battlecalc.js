@@ -243,13 +243,15 @@ document.addEventListener("DOMContentLoaded", function() {
 			var text = planet.name + " - " + fleet.name;
 			var option = el("option");
 			option.innerText = text;
+			option.value = planet.id + "_" + k;
 			option.fleet = fleet;
 			enemypicker.appendChild(option);
 		}
 	});
 	arr(enemypicker.options).sort(function(a, b) { return fleetStats(a.fleet).Value - fleetStats(b.fleet).Value; }).map(appendTo(enemypicker));
 	enemylist.parentNode.insertBefore(div(span(txt("Enemy Fleet")), enemypicker), enemylist);
-	if(saveData.enemySelected) enemypicker.selectedIndex = saveData.enemySelected;
+	if(isFinite(saveData.enemySelected)) enemypicker.selectedIndex = saveData.enemySelected;
+	else if(saveData.enemySelected) enemypicker.value = saveData.enemySelected;
 	enemypicker.onchange = function() {
 		var i = enemypicker.selectedIndex;
 		if(i == -1) return;
@@ -299,7 +301,8 @@ document.addEventListener("DOMContentLoaded", function() {
 			input.value = saveData.bonuses[input.name] || "";
 		});
 		if(saveData.enemySelected) {
-			enemypicker.selectedIndex = saveData.enemySelected;
+			if(isFinite(saveData.enemySelected)) enemypicker.selectedIndex = saveData.enemySelected;
+			else enemypicker.value = saveData.enemySelected;
 			enemypicker.onchange();
 		}
 		saveData.enemies && arr(enemylist.getElementsByTagName("input")).map(function(input) {
@@ -346,7 +349,7 @@ document.addEventListener("DOMContentLoaded", function() {
 		});
 		shiplist.statBlock.innerText = beautyObj(fleetStats(warfleet));
 		var enemy = new Fleet(1, "Test Dummy");
-		saveData.enemySelected = enemypicker.selectedIndex;
+		saveData.enemySelected = enemypicker.value;
 		arr(enemylist.getElementsByTagName("input")).map(function(input) {
 			var val = inputval(input);
 			if(val > 0) enemy.ships[input.ship.id] = saveData.enemies[input.ship.id] = val;
