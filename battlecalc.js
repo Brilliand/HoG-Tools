@@ -281,6 +281,7 @@ document.addEventListener("DOMContentLoaded", function() {
 		saveData = deserialize(window.location.hash.substring(1)) || {};
 
 		saveData.ships && arr(shiplist.getElementsByTagName("input")).map(function(input) {
+			if(!input.ship) return;
 			input.value = saveData.ships[input.ship.id] || "";
 		});
 		saveData.ships && Object.keys(saveData.ships).map(function(k) {
@@ -297,6 +298,7 @@ document.addEventListener("DOMContentLoaded", function() {
 			enemypicker.onchange();
 		}
 		saveData.enemies && arr(enemylist.getElementsByTagName("input")).map(function(input) {
+			if(!input.ship) return;
 			input.value = saveData.enemies[input.ship.id] || "";
 			delete saveData.enemies[input.ship.id];
 		});
