@@ -60,6 +60,10 @@ h2 {
 	background: red;
 }
 
+input:invalid {
+	border-color: red;
+}
+
 #exporter {
 	position: absolute;
 	top: 0;

@@ -123,10 +123,9 @@ document.addEventListener("DOMContentLoaded", function() {
 		var label = span(txt(ship.name));
 		label.onmouseover = function() { this.title = shipSummary(ship); };
 		var input = el("input");
-		input.type = "number";
-		input.min = 0;
+		input.type = "text";
 		input.ship = ship;
-		input.value = n;
+		if(typeof n !== "undefined") input.value = n;
 		input.showLosses = span();
 		return div(label, input, input.showLosses);
 	}
@@ -154,6 +153,17 @@ document.addEventListener("DOMContentLoaded", function() {
 			parent.appendChild(shipselector(available_ships));
 		};
 		return row;
+	}
+	function inputval(input) {
+		delete input.title;
+		input.setCustomValidity("");
+		try {
+			return parseInt(eval(input.value));
+		} catch(e) {
+			input.title = e.message;
+			input.setCustomValidity(e.message);
+			return parseInt(input.value);
+		}
 	}
 
 	var saveData;
@@ -195,8 +205,7 @@ document.addEventListener("DOMContentLoaded", function() {
 	["ammunition", "u-ammunition", "t-ammunition", "armor", "engine"].map(function(name) {
 		var resource = resourcesName[name];
 		var input = el("input");
-		input.type = "number";
-		input.min = 0;
+		input.type = "text";
 		input.name = name;
 		if(saveData.bonuses && saveData.bonuses[name]) input.value = saveData.bonuses[name];
 		input.resource = resource;
@@ -206,9 +215,7 @@ document.addEventListener("DOMContentLoaded", function() {
 	["artofwar"].map(function(name) {
 		var research = researches[researchesName[name]];
 		var input = el("input");
-		input.type = "number";
-		input.min = 0;
-		input.max = 100;
+		input.type = "text";
 		input.name = name;
 		if(saveData.bonuses && saveData.bonuses[name]) input.value = saveData.bonuses[name];
 		input.research = research;
@@ -313,24 +320,27 @@ document.addEventListener("DOMContentLoaded", function() {
 
 		var warfleet = new Fleet(0, "Simulation");
 		arr(shiplist.getElementsByTagName("input")).map(function(input) {
-			if(input.value > 0) warfleet.ships[input.ship.id] = saveData.ships[input.ship.id] = Number(input.value);
+			var val = inputval(input);
+			if(val > 0) warfleet.ships[input.ship.id] = saveData.ships[input.ship.id] = val;
 		});
 		arr(stufflist.getElementsByTagName("input")).map(function(input) {
+			var val = inputval(input);
 			if(input.resource) {
-				warfleet.storage[input.resource.id] = Number(input.value);
+				warfleet.storage[input.resource.id] = val;
 				input.showValue.innerText = "+"+beauty(calcBonus[input.resource.name](warfleet.storage[input.resource.id])) + "x";
 			} else if(input.research) {
-				var newLevel = Number(input.value);
+				var newLevel = val;
 				while(input.research.level > newLevel) { input.research.level--; input.research.unbonus(); }
 				while(input.research.level < newLevel) { input.research.level++; input.research.bonus(); }
 			}
-			if(input.value > 0) saveData.bonuses[input.name] = Number(input.value);
+			if(val > 0) saveData.bonuses[input.name] = val;
 		});
 		shiplist.statBlock.innerText = beautyObj(fleetStats(warfleet));
 		var enemy = new Fleet(1, "Test Dummy");
 		saveData.enemySelected = enemypicker.selectedIndex;
 		arr(enemylist.getElementsByTagName("input")).map(function(input) {
-			if(input.value > 0) enemy.ships[input.ship.id] = saveData.enemies[input.ship.id] = Number(input.value);
+			var val = inputval(input);
+			if(val > 0) enemy.ships[input.ship.id] = saveData.enemies[input.ship.id] = val;
 		});
 		enemylist.statBlock.innerText = beautyObj(fleetStats(enemy));
 
