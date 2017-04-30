@@ -281,28 +281,28 @@ document.addEventListener("DOMContentLoaded", function() {
 		saveData = deserialize(window.location.hash.substring(1)) || {};
 
 		saveData.ships && arr(shiplist.getElementsByTagName("input")).map(function(input) {
-			input.value = saveData.ships[input.ship.id];
+			input.value = saveData.ships[input.ship.id] || "";
 		});
 		saveData.ships && Object.keys(saveData.ships).map(function(k) {
 			if(!available_ships[k]) return;
-			var n = saveData.ships[k];
+			var n = saveData.ships[k] || "";
 			shiplist.appendChild(shipinput(ships[k], n));
 			delete available_ships[k];
 		});
 		saveData.bonuses && arr(stufflist.getElementsByTagName("input")).map(function(input) {
-			input.value = saveData.bonuses[input.name];
+			input.value = saveData.bonuses[input.name] || "";
 		});
 		if(saveData.enemySelected) {
 			enemypicker.selectedIndex = saveData.enemySelected;
 			enemypicker.onchange();
 		}
 		saveData.enemies && arr(enemylist.getElementsByTagName("input")).map(function(input) {
-			input.value = saveData.enemies[input.ship.id];
+			input.value = saveData.enemies[input.ship.id] || "";
 			delete saveData.enemies[input.ship.id];
 		});
 		saveData.enemies && Object.keys(saveData.enemies).map(function(k) {
 			if(!ships[k]) return;
-			var n = saveData.enemies[k];
+			var n = saveData.enemies[k] || "";
 			enemylist.appendChild(shipinput(ships[k], n));
 		});
 		window.history.replaceState({}, document.title, window.location.pathname);
