@@ -157,13 +157,15 @@ document.addEventListener("DOMContentLoaded", function() {
 	function inputval(input) {
 		delete input.title;
 		input.setCustomValidity("");
+
+		var value = input.value;
 		try {
-			return parseInt(eval(input.value));
+			value = eval(value);
 		} catch(e) {
 			input.title = e.message;
 			input.setCustomValidity(e.message);
-			return parseInt(input.value);
 		}
+		return parseInt(value) || 0;
 	}
 
 	var saveData;
