@@ -322,7 +322,7 @@ document.addEventListener("DOMContentLoaded", function() {
 	var battlereport = document.getElementById("battlereport");
 	var exporter = document.getElementById("exporter");
 	var nextrun = document.getElementById("nextrun");
-	if(saveData.runid) nextrun.target = saveData.runid+"+";
+	if(window.name) nextrun.target = window.name+"+";
 	var update = document.getElementById("battlecalc").onchange = function() {
 		saveData = {
 			ships: {},
@@ -388,7 +388,6 @@ document.addEventListener("DOMContentLoaded", function() {
 			}, {})),
 			enemySelected: enemypicker.selectedIndex + (enemy.weight() ? 0 : 1),
 			enemies: enemy.ships.reduce(function(obj, v, k) { if(v > 0) obj[k] = v; return obj; }, {}),
-			runid: nextrun.target,
 		});
 	};
 	update();
