@@ -377,8 +377,8 @@ document.addEventListener("DOMContentLoaded", function() {
 			ships: warfleet.ships.reduce(function(obj, v, k) { if(v > 0) obj[k] = v; return obj; }, {}),
 			bonuses: ["artofwar"].reduce(function(obj, name) {
 				var research = researches[researchesName[name]];
-				if(!research.requirement()) return obj;
-				obj[name] = research.level;
+				var v = research.level;
+				if(v > 0) obj[name] = v;
 				return obj;
 			}, (warfleet.weight() ? ["ammunition", "u-ammunition", "t-ammunition", "armor", "engine"] : []).reduce(function(obj, name) {
 				var resource = resourcesName[name];
