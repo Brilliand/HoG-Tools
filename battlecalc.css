@@ -47,16 +47,23 @@ h2 {
 .statblock {
 	float: left;
 	margin-top: 1em;
+	padding: 1ex;
+	border: 1px solid transparent;
+	box-sizing: border-box;
 	width: 50%;
 	text-align: left;
 	white-space: pre-wrap;
 }
 
-.tablelike[data-weight-remaining] ~ .outcome {
+.statblock.combat {
+	border-color: black;
+}
+
+.tablelike[data-weight-remaining] ~ .statblock.combat {
 	background: green;
 }
 
-.tablelike[data-weight-remaining="0"] ~ .outcome {
+.tablelike[data-weight-remaining="0"] ~ .statblock.combat {
 	background: red;
 }
 
