@@ -154,6 +154,24 @@ document.addEventListener("DOMContentLoaded", function() {
 			Crippling: 0,
 		});
 	}
+	function writeFleetSummary(container, friend, foe) {
+		while(container.lastChild) container.removeChild(container.lastChild);
+
+		var fleetData = fleetSummaryData(friend, foe);
+		var tooltips = {
+			Toughness: "Total amount of raw Power this fleet can absorb before dying",
+			Weight: "Total mass of ships damage is spread across (helps to keep weaker ships alive)",
+			"Killing Power": "Progress toward killing the enemy outright (opposes enemy Toughness)",
+			Crippling: "Damage inflicted against enemy Power (reduces losses in later rounds)",
+		};
+		for(var k in fleetData) {
+			if(!tooltips[k]) continue;
+			var v = fleetData[k];
+			var row = div(txt(k + ": " + (typeof v === "number" ? beauty(v) : v)));
+			row.title = tooltips[k];
+			container.appendChild(row);
+		}
+	}
 	function fleetBonus(fleet) {
 		var bonus = {
 			power: 1,
@@ -197,16 +215,12 @@ document.addEventListener("DOMContentLoaded", function() {
 			toughness += n * shiptough;
 			speedpower += (n+1) * ship.power * bonus.power * speedred(1, ship.speed * bonus.speed, 100000);
 			speedtough += n * shiptough / speedred(ship.speed * bonus.speed, 1, ship.weight);
-			rawpower += (n+1) * ship.power * speedred(1, ship.speed, 100000);
-			rawtough += n * ship.hp / (1 - dmgred(ship.armor)) / speedred(ship.speed, 1, ship.weight);
 		});
 		return {
 			Power: power,
 			Armor: armor,
 			HP: hp,
 			Toughness: toughness,
-			"Speed Adjustment": (Math.sqrt(speedpower * speedtough || 1) / Math.sqrt(threat * toughness || 1) * 100).toFixed(2)+"%",
-			"Inventory Adjustment": "x"+beauty(Math.sqrt(speedpower * speedtough || 1) / Math.sqrt(rawpower * rawtough || 1)),
 			Value: Math.sqrt(speedpower * speedtough),
 		};
 	}
@@ -444,9 +458,9 @@ document.addEventListener("DOMContentLoaded", function() {
 		});
 
 		shiplist.statBlock.innerText = beautyObj(fleetStats(warfleet, enemy));
-		shiplist.statBlockCombat.innerText = beautyObj(fleetSummaryData(warfleet, enemy));
+		writeFleetSummary(shiplist.statBlockCombat, warfleet, enemy);
 		enemylist.statBlock.innerText = beautyObj(fleetStats(enemy, warfleet));
-		enemylist.statBlockCombat.innerText = beautyObj(fleetSummaryData(enemy, warfleet));
+		writeFleetSummary(enemylist.statBlockCombat, enemy, warfleet);
 
 		arr(shiplist.getElementsByTagName("input")).map(function(input) {
 			if(input.type === "button") return;
