@@ -142,9 +142,16 @@ document.addEventListener("DOMContentLoaded", function() {
 			delete v.Speed; delete v.Duration; delete v.Count;
 			return v;
 		}).reduce(function(obj, v) {
-			console.log(obj, v);
 			for(var k in v) obj[k] += v[k];
 			return obj;
+		}, {
+			Power: 0,
+			Armor: 0,
+			HP: 0,
+			Toughness: 0,
+			Weight: 0,
+			"Killing Power": 0,
+			Crippling: 0,
 		});
 	}
 	function fleetBonus(fleet) {
