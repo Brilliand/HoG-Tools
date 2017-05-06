@@ -313,22 +313,25 @@ document.addEventListener("DOMContentLoaded", function() {
 	var stufflist = document.getElementById("stufflist");
 	["ammunition", "u-ammunition", "t-ammunition", "armor", "engine"].map(function(name) {
 		var resource = resourcesName[name];
+		var label = span(txt(name.capitalize()));
 		var input = el("input");
 		input.type = "text";
+		input.label = label;
 		input.name = name;
 		if(saveData.bonuses && saveData.bonuses[name]) input.value = saveData.bonuses[name];
 		input.resource = resource;
 		input.showValue = span();
-		return div(span(txt(name)), input, input.showValue);
+		return div(label, input, input.showValue);
 	}).map(appendTo(stufflist));
 	["artofwar"].map(function(name) {
 		var research = researches[researchesName[name]];
+		var label = span(txt(research.name));
 		var input = el("input");
 		input.type = "text";
 		input.name = name;
 		if(saveData.bonuses && saveData.bonuses[name]) input.value = saveData.bonuses[name];
 		input.research = research;
-		return div(span(txt(research.name)), input);
+		return div(label, input);
 	}).map(appendTo(stufflist));
 	var calcBonus = {
 		"ammunition": function(v) { return 10 * Math.log(1 + v / 1E7)/Math.log(2); },
@@ -457,6 +460,28 @@ document.addEventListener("DOMContentLoaded", function() {
 			var val = inputval(input);
 			if(val > 0) enemy.ships[input.ship.id] = saveData.enemies[input.ship.id] = val;
 		});
+
+		arr(stufflist.getElementsByTagName("input")).filter(function(input) {
+			return input.resource && input.label;
+		}).reduce(function(fleetRealStats, input) {
+			var val = warfleet.storage[input.resource.id];
+			warfleet.storage[input.resource.id]++;
+			var fleetPlusStats = fleetSummaryData(warfleet, enemy);
+			warfleet.storage[input.resource.id] = 0;
+			var fleetPreStats = fleetSummaryData(warfleet, enemy);
+			warfleet.storage[input.resource.id] = val;
+
+			var changes = {};
+			for(var k in fleetRealStats) {
+				var a = fleetPreStats[k],
+				    b = fleetRealStats[k] - a,
+				    c = fleetPlusStats[k] - a - b;
+				if(b || c) changes[k] = beauty(b) + " (+" + beauty(c) + ")";
+			}
+			input.label.title = beautyObj(changes);
+
+			return fleetRealStats;
+		}, fleetSummaryData(warfleet, enemy));
 
 		shiplist.statBlock.innerText = beautyObj(fleetStats(warfleet, enemy));
 		writeFleetSummary(shiplist.statBlockCombat, warfleet, enemy);
