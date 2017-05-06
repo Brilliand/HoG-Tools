@@ -66,20 +66,20 @@ document.addEventListener("DOMContentLoaded", function() {
 			HP: ship.hp,
 			Toughness: ship.hp / (1 - dmgred(ship.armor)),
 			Speed: ship.speed,
-			Weight: ship.weight,
+			Weight: ship.combatWeight,
 		};
 		if(friend) {
 			var bonus = fleetBonus(friend);
-			var fleetWeight = friend.weight();
+			var fleetWeight = friend.combatWeight();
 			shipStats.Power *= bonus.power;
 			shipStats.Armor *= bonus.armor;
 			shipStats.Toughness = ship.hp / (1 - dmgred(shipStats.Armor));
 			shipStats.Speed *= bonus.speed;
-			shipStats.Duration = (1 + fleetWeight / ship.weight);
+			shipStats.Duration = (1 + fleetWeight / ship.combatWeight);
 		}
 		if(foe) {
 			var bonus = fleetBonus(foe);
-			var fleetWeight = foe.weight();
+			var fleetWeight = foe.combatWeight();
 			var netEffect = foe.ships.map(function(n, k) {
 				if(n == 0) return {};
 				var enemyShip = ships[k];
@@ -87,9 +87,9 @@ document.addEventListener("DOMContentLoaded", function() {
 				result.power = n * enemyShip.power * bonus.power;
 				result.harm = speedred(shipStats.Speed, enemyShip.speed * bonus.speed, shipStats.Weight) * result.power / shipStats.Toughness;
 				result.toughness = n * enemyShip.hp / (1 - dmgred(enemyShip.armor * bonus.armor));
-				var modifiedPower = speedred(enemyShip.speed * bonus.speed, shipStats.Speed, enemyShip.weight) * shipStats.Power;
+				var modifiedPower = speedred(enemyShip.speed * bonus.speed, shipStats.Speed, enemyShip.combatWeight) * shipStats.Power;
 				result.effect = result.toughness / modifiedPower;
-				var weightPercent = n * enemyShip.weight / fleetWeight;
+				var weightPercent = n * enemyShip.combatWeight / fleetWeight;
 				result.powerEffect = weightPercent * modifiedPower * result.power / result.toughness;
 				return result;
 			}).reduce(function(obj, v) {
@@ -215,7 +215,7 @@ document.addEventListener("DOMContentLoaded", function() {
 			threat += (n+1) * ship.power * bonus.power;
 			toughness += n * shiptough;
 			speedpower += (n+1) * ship.power * bonus.power * speedred(1, ship.speed * bonus.speed, 100000);
-			speedtough += n * shiptough / speedred(ship.speed * bonus.speed, 1, ship.weight);
+			speedtough += n * shiptough / speedred(ship.speed * bonus.speed, 1, ship.combatWeight);
 		});
 		return {
 			Power: power,
@@ -346,7 +346,7 @@ document.addEventListener("DOMContentLoaded", function() {
 	planets.map(function(planet) {
 		for(var k in planet.fleets) {
 			var fleet = planet.fleets[k];
-			if(!fleet.weight()) continue;
+			if(!fleet.combatWeight()) continue;
 			var text = planet.name + " - " + fleet.name;
 			var option = el("option");
 			option.innerText = text;
@@ -501,11 +501,11 @@ document.addEventListener("DOMContentLoaded", function() {
 			if(input.type === "button") return;
 			input.showLosses.innerText = warfleet.ships[input.ship.id];
 		});
-		shiplist.dataset.weightRemaining = warfleet.weight();
+		shiplist.dataset.weightRemaining = warfleet.combatWeight();
 		arr(enemylist.getElementsByTagName("input")).map(function(input) {
 			input.showLosses.innerText = enemy.ships[input.ship.id];
 		});
-		enemylist.dataset.weightRemaining = enemy.weight();
+		enemylist.dataset.weightRemaining = enemy.combatWeight();
 
 		var basePath = location.protocol+'//'+location.host+location.pathname;
 		exporter.href = exporter.firstChild.alt = basePath+"#"+serialize(saveData);
@@ -518,13 +518,13 @@ document.addEventListener("DOMContentLoaded", function() {
 				var v = research.level;
 				if(v > 0) obj[name] = v;
 				return obj;
-			}, (warfleet.weight() ? ["ammunition", "u-ammunition", "t-ammunition", "armor", "engine"] : []).reduce(function(obj, name) {
+			}, (warfleet.combatWeight() ? ["ammunition", "u-ammunition", "t-ammunition", "armor", "engine"] : []).reduce(function(obj, name) {
 				var resource = resourcesName[name];
 				var v = warfleet.storage[resource.id];
 				if(v > 0) obj[name] = v;
 				return obj;
 			}, {})),
-			enemySelected: enemypicker.selectedIndex + (enemy.weight() ? 0 : 1),
+			enemySelected: enemypicker.selectedIndex + (enemy.combatWeight() ? 0 : 1),
 			enemies: enemy.ships.reduce(function(obj, v, k) { if(v > 0) obj[k] = v; return obj; }, {}),
 		});
 	};
