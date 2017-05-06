@@ -111,9 +111,9 @@ document.addEventListener("DOMContentLoaded", function() {
 	}
 	function shipSummary(ship, friend, foe) {
 		var shipStats = shipSummaryData(ship, friend, foe)
+		var fleetStats = friend ? fleetSummaryData(friend, foe) : {};
 		if(ship.id == 14) {
 			if(friend) {
-				var fleetStats = fleetSummaryData(friend, foe);
 				var precount = friend.ships[ship.id];
 				var bonusChange = (1 + .1 * Math.log2(2 + precount)) / (1 + .1 * Math.log2(1 + precount));
 				shipStats.Power *= bonusChange;
@@ -128,6 +128,7 @@ document.addEventListener("DOMContentLoaded", function() {
 				shipStats.Crippling *= 1.1;
 			}
 		}
+		for(var k in fleetStats) if(fleetStats[k]) shipStats[k] = beauty(shipStats[k])+" ("+beauty(friend.ships[ship.id] * shipStats[k] / fleetStats[k] * 100)+"%)";
 		return beautyObj(shipStats);
 	}
 	function fleetSummaryData(friend, foe) {
