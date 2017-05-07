@@ -102,10 +102,9 @@ document.addEventListener("DOMContentLoaded", function() {
 				effect: 0,
 				powerEffect: 0,
 			});
-			if(netEffect.harm) shipStats.Toughness = netEffect.power / netEffect.harm;
+			if(netEffect.harm) shipStats["Adjusted Toughness"] = netEffect.power / netEffect.harm;
 			if(netEffect.harm && shipStats.Duration) shipStats.Duration /= netEffect.harm;
 			if(netEffect.effect) shipStats["Killing Power"] = netEffect.toughness / netEffect.effect;
-			if(netEffect.powerEffect) shipStats.Crippling = netEffect.powerEffect;
 		}
 		return shipStats;
 	}
@@ -120,12 +119,9 @@ document.addEventListener("DOMContentLoaded", function() {
 				shipStats.Power += fleetStats.Power * (bonusChange - 1);
 				shipStats["Killing Power"] *= bonusChange;
 				shipStats["Killing Power"] += fleetStats["Killing Power"] * (bonusChange - 1);
-				shipStats.Crippling *= bonusChange;
-				shipStats.Crippling += fleetStats.Crippling * (bonusChange - 1);
 			} else {
 				shipStats.Power *= 1.1;
 				shipStats["Killing Power"] *= 1.1;
-				shipStats.Crippling *= 1.1;
 			}
 		}
 		for(var k in fleetStats) if(fleetStats[k]) shipStats[k] = beauty(shipStats[k])+" ("+beauty(friend.ships[ship.id] * shipStats[k] / fleetStats[k] * 100)+"%)";
@@ -149,10 +145,9 @@ document.addEventListener("DOMContentLoaded", function() {
 			Power: 0,
 			Armor: 0,
 			HP: 0,
-			Toughness: 0,
+			"Adjusted Toughness": 0,
 			Weight: 0,
 			"Killing Power": 0,
-			Crippling: 0,
 		});
 	}
 	function writeFleetSummary(container, friend, foe) {
@@ -160,10 +155,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
 		var fleetData = fleetSummaryData(friend, foe);
 		var tooltips = {
-			Toughness: "Total amount of raw Power this fleet can absorb before dying",
+			"Adjusted Toughness": "Total amount of raw Power this fleet can absorb before dying",
 			Weight: "Total mass of ships damage is spread across (helps to keep weaker ships alive)",
 			"Killing Power": "Progress toward killing the enemy outright (opposes enemy Toughness)",
-			Crippling: "Damage inflicted against enemy Power (reduces losses in later rounds)",
 		};
 		for(var k in fleetData) {
 			if(!tooltips[k]) continue;
