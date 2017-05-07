@@ -271,14 +271,12 @@ document.addEventListener("DOMContentLoaded", function() {
 
 	var saveData;
 	try {
-		saveData = deserialize(window.location.hash.substring(1)) || JSON.parse(localStorage.getItem("battlecalc-persist")) || {};
+		saveData = history.state || deserialize(window.location.hash.substring(1)) || JSON.parse(localStorage.getItem("battlecalc-persist")) || {};
 	} catch(e) {
 		console.log(e);
 		saveData = {};
 	};
-	if(window.location.hash) {
-		window.history.replaceState({}, document.title, window.location.pathname);
-	}
+	window.history.replaceState(saveData, document.title, window.location.pathname);
 
 	var shiplist = document.getElementById("shiplist");
 	var available_ships = ships.slice();
@@ -385,9 +383,7 @@ document.addEventListener("DOMContentLoaded", function() {
 	enemylist.statBlockCombat.className = "statblock combat";
 	enemylist.parentNode.appendChild(enemylist.statBlockCombat);
 
-	window.onhashchange = function() {
-		saveData = deserialize(window.location.hash.substring(1)) || {};
-
+	function loadSaveData(saveData) {
 		saveData.ships && arr(shiplist.getElementsByTagName("input")).map(function(input) {
 			if(!input.ship) return;
 			input.value = saveData.ships[input.ship.id] || "";
@@ -416,7 +412,23 @@ document.addEventListener("DOMContentLoaded", function() {
 			var n = saveData.enemies[k] || "";
 			enemylist.appendChild(shipinput(ships[k], n));
 		});
-		window.history.replaceState({}, document.title, window.location.pathname);
+	}
+
+	window.onhashchange = function() {
+		saveData = deserialize(window.location.hash.substring(1));
+		if(!saveData) return;
+
+		loadSaveData(saveData);
+
+		update();
+	};
+
+	window.onpopstate = function(e) {
+		saveData = e.state;
+		if(!saveData) return;
+
+		loadSaveData(saveData);
+
 		update();
 	};
 
@@ -503,6 +515,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 		var basePath = location.protocol+'//'+location.host+location.pathname;
 		exporter.href = exporter.firstChild.alt = basePath+"#"+serialize(saveData);
+		window.history.replaceState(saveData, document.title, window.location.hash ? exporter.href : window.location.pathname);
 		localStorage.setItem("battlecalc-persist", JSON.stringify(saveData));
 
 		nextrun.href = basePath+"#"+serialize({
