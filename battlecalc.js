@@ -145,6 +145,7 @@ document.addEventListener("DOMContentLoaded", function() {
 			Power: 0,
 			Armor: 0,
 			HP: 0,
+			Toughness: 0,
 			"Adjusted Toughness": 0,
 			Weight: 0,
 			"Killing Power": 0,
@@ -155,6 +156,10 @@ document.addEventListener("DOMContentLoaded", function() {
 
 		var fleetData = fleetSummaryData(friend, foe);
 		var tooltips = {
+			Power: "Total Power of all ships in fleet",
+			Armor: "Total Armor of all ships in fleet",
+			HP: "Total HP of all ships in fleet",
+			Toughness: "Effective HP of fleet after Armor bonuses",
 			"Adjusted Toughness": "Total amount of raw Power this fleet can absorb before dying",
 			Weight: "Total mass of ships damage is spread across (helps to keep weaker ships alive)",
 			"Killing Power": "Progress toward killing the enemy outright (opposes enemy Toughness)",
@@ -489,9 +494,25 @@ document.addEventListener("DOMContentLoaded", function() {
 			return fleetRealStats;
 		}, fleetSummaryData(warfleet, enemy));
 
-		shiplist.statBlock.innerText = beautyObj(fleetStats(warfleet, enemy));
+		shiplist.statBlock.innerText = beautyObj(warfleet.ships.reduce(function(obj, n, k) {
+			if(n === 0) return obj;
+			ships[k].cost.map(function(v, i) {
+				if(!v) return;
+				var resName = resources[i].name.capitalize();
+				obj[resName] = (obj[resName] || 0) + n * v;
+			})
+			return obj;
+		}, {}));
 		writeFleetSummary(shiplist.statBlockCombat, warfleet, enemy);
-		enemylist.statBlock.innerText = beautyObj(fleetStats(enemy, warfleet));
+		enemylist.statBlock.innerText = beautyObj(enemy.ships.reduce(function(obj, n, k) {
+			if(n === 0) return obj;
+			ships[k].cost.map(function(v, i) {
+				if(!v) return;
+				var resName = resources[i].name.capitalize();
+				obj[resName] = (obj[resName] || 0) + n * v;
+			})
+			return obj;
+		}, {}));
 		writeFleetSummary(enemylist.statBlockCombat, enemy, warfleet);
 
 		arr(shiplist.getElementsByTagName("input")).map(function(input) {
