@@ -9,6 +9,20 @@ document.addEventListener("DOMContentLoaded", function() {
 	function span() { return el("span", arr(arguments)); }
 	function label() { return el("label", arr(arguments)); }
 
+	function selectElementContents(el) {
+		if (window.getSelection && document.createRange) {
+			var sel = window.getSelection();
+			var range = document.createRange();
+			range.selectNodeContents(el);
+			sel.removeAllRanges();
+			sel.addRange(range);
+		} else if (document.selection && document.body.createTextRange) {
+			var textRange = document.body.createTextRange();
+			textRange.moveToElementText(el);
+			textRange.select();
+		}
+	}
+
 	function serialize(obj) {
 		return Object.keys(obj).map(function(k) {
 			var v;
@@ -437,10 +451,16 @@ document.addEventListener("DOMContentLoaded", function() {
 		update();
 	};
 
-	var battlereport = document.getElementById("battlereport");
 	var exporter = document.getElementById("exporter");
+	exporter.onclick = function() {
+		selectElementContents(this);
+		if(document.execCommand) document.execCommand("copy");
+	};
+
 	var nextrun = document.getElementById("nextrun");
 	if(window.name) nextrun.target = window.name+"+";
+
+	var battlereport = document.getElementById("battlereport");
 	var update = document.getElementById("battlecalc").onchange = function() {
 		saveData = {
 			ships: {},
