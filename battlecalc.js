@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", function() {
 		if(!str) return null;
 		var data = str.split("&").map(function(str) {
 			var parts = str.split("=", 2);
-			if(parts[1].indexOf(":") != -1) {
+			if(parts[1] && parts[1].indexOf(":") != -1) {
 				parts[1] = parts[1].split(",").map(function(str) {
 					return str.split(":", 2);
 				}).reduce(function(obj, add) {
