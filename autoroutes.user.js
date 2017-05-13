@@ -74,18 +74,21 @@
 	}
 
 	// Hook into game interface
-	$("#planet_selection_interface").prepend(function(e) {
-		var update_autoroutes_button = $("<span>", {
+    	$("#icon_cont").append(function() {
+		var update_autoroutes_button = $("<img>", {
 			id: "update_autoroutes_button",
-			"class": "blue_text",
+			src: "ui/empire.png",
+			height: 30,
+			width: 30,
 		}).css({
-			float: "right",
-			margin: "1em 2em",
+			position: "absolute",
+			top: "6px",
+			left: "120px",
 			cursor: "pointer",
 		}).click(function(e) {
 			e.stopPropagation();
 			updateRoutes();
-		}).text("Update Autoroutes");
+		}).attr("title", "Update Autoroutes");
 		return update_autoroutes_button;
 	});
 	var observer = new MutationObserver(function(mutation) {
