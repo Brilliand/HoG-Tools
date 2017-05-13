@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         HoG Tools - Automated Deliveries
+// @name         HoG Tools - Autoroute Manager
 // @namespace    https://github.com/Brilliand/HoG-Tools
 // @version      1.0
 // @description  Provides automated autoroute handling with an arbitrary autoroute network and per-resource hubs
