@@ -76,8 +76,10 @@ document.addEventListener("DOMContentLoaded", function() {
 	function shipSummaryData(ship, friend, foe) {
 		var shipStats = {
 			Power: ship.power,
+			Piercing: (ship.piercing || 0),
 			Armor: ship.armor,
 			HP: ship.hp,
+			"Piercing Power": ship.power * (ship.piercing || 0) / 100,
 			Toughness: ship.hp / (1 - dmgred(ship.armor)),
 			Speed: ship.speed,
 			Weight: ship.combatWeight,
@@ -87,6 +89,7 @@ document.addEventListener("DOMContentLoaded", function() {
 			var fleetWeight = friend.combatWeight();
 			shipStats.Power *= bonus.power;
 			shipStats.Armor *= bonus.armor;
+			shipStats["Piercing Power"] *= bonus.power;
 			shipStats.Toughness = ship.hp / (1 - dmgred(shipStats.Armor));
 			shipStats.Speed *= bonus.speed;
 			shipStats.Duration = (1 + fleetWeight / ship.combatWeight);
@@ -98,10 +101,13 @@ document.addEventListener("DOMContentLoaded", function() {
 				if(n == 0) return {};
 				var enemyShip = ships[k];
 				var result = {};
+				var shipDR = Math.min(shipStats.HP / shipStats.Toughness + (enemyShip.piercing || 0) / 100, 1);
+				var enemyDR = Math.min(1 - dmgred(enemyShip.armor * bonus.armor) + (shipStats.Piercing) / 100, 1);
 				result.power = n * enemyShip.power * bonus.power;
-				result.harm = speedred(shipStats.Speed, enemyShip.speed * bonus.speed, shipStats.Weight) * result.power / shipStats.Toughness;
+				result.harm = speedred(shipStats.Speed, enemyShip.speed * bonus.speed, shipStats.Weight) * result.power * shipDR / shipStats.HP;
 				result.toughness = n * enemyShip.hp / (1 - dmgred(enemyShip.armor * bonus.armor));
-				var modifiedPower = speedred(enemyShip.speed * bonus.speed, shipStats.Speed, enemyShip.combatWeight) * shipStats.Power;
+				var piercingBonus = result.toughness * enemyDR / (n * enemyShip.hp);
+				var modifiedPower = speedred(enemyShip.speed * bonus.speed, shipStats.Speed, enemyShip.combatWeight) * piercingBonus * shipStats.Power;
 				result.effect = result.toughness / modifiedPower;
 				var weightPercent = n * enemyShip.combatWeight / fleetWeight;
 				result.powerEffect = weightPercent * modifiedPower * result.power / result.toughness;
@@ -160,6 +166,7 @@ document.addEventListener("DOMContentLoaded", function() {
 			Armor: 0,
 			HP: 0,
 			Toughness: 0,
+			"Piercing Power": 0,
 			"Adjusted Toughness": 0,
 			Weight: 0,
 			"Killing Power": 0,
@@ -174,6 +181,7 @@ document.addEventListener("DOMContentLoaded", function() {
 			Armor: "Total Armor of all ships in fleet",
 			HP: "Total HP of all ships in fleet",
 			Toughness: "Effective HP of fleet after Armor bonuses",
+			"Piercing Power": "Amount of direct HP damage this fleet deals due to armor piercing",
 			"Adjusted Toughness": "Total amount of raw Power this fleet can absorb before dying",
 			Weight: "Total mass of ships damage is spread across (helps to keep weaker ships alive)",
 			"Killing Power": "Progress toward killing the enemy outright (opposes enemy Toughness)",
@@ -213,6 +221,7 @@ document.addEventListener("DOMContentLoaded", function() {
 		    hp = 0,
 		    threat = 0,
 		    toughness = 0,
+		    piercepower = 0,
 		    speedpower = 0,
 		    speedtough = 0,
 		    rawpower = 0,
@@ -222,16 +231,19 @@ document.addEventListener("DOMContentLoaded", function() {
 			if(n == 0) return;
 			var ship = ships[k];
 			power += n * ship.power * bonus.power;
+			piercepower += power * (ship.piercing || 0) / 100,
 			armor += n * ship.armor * bonus.armor;
 			hp += n * ship.hp;
 			var shiptough = ship.hp / (1 - dmgred(ship.armor * bonus.armor));
+			var piercingbonus = Math.min(1 + 10 * (ship.piercing || 0) / 100, 10);
 			threat += (n+1) * ship.power * bonus.power;
 			toughness += n * shiptough;
-			speedpower += (n+1) * ship.power * bonus.power * speedred(1, ship.speed * bonus.speed, 100000);
+			speedpower += (n+1) * ship.power * piercingbonus * bonus.power * speedred(1, ship.speed * bonus.speed, 100000);
 			speedtough += n * shiptough / speedred(ship.speed * bonus.speed, 1, ship.combatWeight);
 		});
 		return {
 			Power: power,
+			"Piercing Power": piercepower,
 			Armor: armor,
 			HP: hp,
 			Toughness: toughness,
