@@ -28,6 +28,7 @@
 
 	var observer = new MutationObserver(function(mutation) {
 		if(document.getElementById("battlecalc_button")) return;
+		if(typeof currentFleetId === "undefined") return;
 		var parts = currentFleetId.split("_");
 		var planet = planets[parts[0]];
 		var fleet = planet.fleets[parts[1]];
