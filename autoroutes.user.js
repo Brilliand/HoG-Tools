@@ -17,7 +17,7 @@
 	} catch(e) {
 		console.error("Error in saved hubs:", e.stack);
 		hubs = {};
-	};
+	}
 	function saveHubs() {
 		localStorage.setItem("HoGTools-AutorouteHubs", JSON.stringify(hubs));
 	}
@@ -33,12 +33,12 @@
 	Array.prototype.sub = function(a) {
 		return this.map(function(v, i) {
 			return v - a[i];
-		})
+		});
 	};
 	Array.prototype.multEach = function(n) {
 		return this.map(function(v, i) {
 			return v *= n;
-		})
+		});
 	};
 	Array.prototype.sum = function() {
 		return this.reduce(function(a, b) { return a + b; }, 0);
@@ -74,7 +74,7 @@
 	}
 
 	// Hook into game interface
-    	$("#icon_cont").append(function() {
+	$("#icon_cont").append(function() {
 		var update_autoroutes_button = $("<img>", {
 			id: "update_autoroutes_button",
 			src: "ui/empire.png",
@@ -224,8 +224,8 @@
 				}
 			});
 			var travelTime = entry.route.time;
-			var resOut = toTransport.map(function(v) { return v > 0 ? Math.ceil(v * travelTime) : 0 });
-			var resIn = toTransport.map(function(v) { return v < 0 ? Math.ceil(-v * travelTime) : 0 });
+			var resOut = toTransport.map(function(v) { return v > 0 ? Math.ceil(v * travelTime) : 0; });
+			var resIn = toTransport.map(function(v) { return v < 0 ? Math.ceil(-v * travelTime) : 0; });
 			canLeave = canLeave.multEach(travelTime).map(Math.ceil);
 
 			var outLeave = resOut.sum() - entry.route.storage;
@@ -264,5 +264,5 @@
 				});
 			}
 		}
-	};
+	}
 })();
