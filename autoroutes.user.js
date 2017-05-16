@@ -235,7 +235,7 @@
 					canLeave = reduceResourcesReverse(canLeave, safeLeave - outLeave);
 				}
 				resOut = resOut.sub(canLeave);
-				if(safeLeave < outLeave) resOut = reduceResources(resOut, safeLeave - outLeave);
+				if(safeLeave < outLeave) resOut = reduceResources(resOut, outLeave - safeLeave);
 			}
 
 			var inLeave = resIn.sum() - entry.route.storage;
