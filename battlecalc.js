@@ -364,6 +364,10 @@ document.addEventListener("DOMContentLoaded", function() {
 		"engine": function(v) { return v / 5e6; },
 	};
 
+	stufflist.statBlock = span();
+	stufflist.statBlock.className = "statblock only";
+	stufflist.parentNode.appendChild(stufflist.statBlock);
+
 	var enemylist = document.getElementById("enemylist");
 	var enemypicker = el("select");
 	planets.map(function(planet) {
@@ -536,6 +540,10 @@ document.addEventListener("DOMContentLoaded", function() {
 			return obj;
 		}, {}));
 		writeFleetSummary(shiplist.statBlockCombat, warfleet, enemy);
+		stufflist.statBlock.innerText = beautyObj({
+			"Max Storage": warfleet.maxStorage(),
+			"Used Storage": warfleet.usedStorage(),
+		});
 		enemylist.statBlock.innerText = beautyObj(enemy.ships.reduce(function(obj, n, k) {
 			if(n === 0) return obj;
 			ships[k].cost.map(function(v, i) {
@@ -565,6 +573,10 @@ document.addEventListener("DOMContentLoaded", function() {
 			input.showLosses.innerText = enemy.ships[input.ship.id];
 		});
 		enemylist.dataset.weightRemaining = enemy.combatWeight();
+
+		stufflist.statBlock.innerText += "\n" + beautyObj({
+			"Surviving Storage": warfleet.maxStorage(),
+		});
 
 		var basePath = location.protocol+'//'+location.host+location.pathname;
 		exporter.href = exporter.firstChild.alt = basePath+"#"+serialize(saveData);
