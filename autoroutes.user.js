@@ -215,7 +215,7 @@
 				} else {
 					var toSpare = v + Math.min(planetProduction[entry.to][k], 0);
 					var leaveBehind = Math.max(Math.min(toSpare, totalRes[k]), 0);
-					if(hubs.hasOwnProperty(k)) {
+					if(hubs.hasOwnProperty(k) && game.searchPlanet(hubs[k])) {
 						canLeave[k] = leaveBehind;
 						return v;
 					} else {
