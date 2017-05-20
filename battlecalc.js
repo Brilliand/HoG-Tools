@@ -367,6 +367,9 @@ document.addEventListener("DOMContentLoaded", function() {
 	stufflist.statBlock = span();
 	stufflist.statBlock.className = "statblock only";
 	stufflist.parentNode.appendChild(stufflist.statBlock);
+	var resourcelosses = span();
+	resourcelosses.className = "statblock combat only";
+	stufflist.parentNode.appendChild(resourcelosses);
 
 	var enemylist = document.getElementById("enemylist");
 	var enemypicker = el("select");
@@ -555,6 +558,14 @@ document.addEventListener("DOMContentLoaded", function() {
 		}, {}));
 		writeFleetSummary(enemylist.statBlockCombat, enemy, warfleet);
 
+		var warfleetNetWorth = warfleet.ships.reduce(function(arr, n, k) {
+			if(n === 0) return arr;
+			ships[k].cost.map(function(v, i) {
+				arr[i] += n * v;
+			})
+			return arr;
+		}, warfleet.storage.slice());
+
 		arr(shiplist.getElementsByTagName("input")).map(function(input) {
 			if(input.type === "button") return;
 			input.label.title = shipSummary(input.ship, warfleet, enemy);
@@ -577,6 +588,21 @@ document.addEventListener("DOMContentLoaded", function() {
 		stufflist.statBlock.innerText += "\n" + beautyObj({
 			"Surviving Storage": warfleet.maxStorage(),
 		});
+
+		var warfleetRemainingNetWorth = warfleet.ships.reduce(function(arr, n, k) {
+			if(n === 0) return arr;
+			ships[k].cost.map(function(v, i) {
+				arr[i] += n * v;
+			})
+			return arr;
+		}, warfleet.storage.slice());
+		resourcelosses.innerText = beautyObj(warfleetNetWorth.reduce(function(obj, v, i) {
+			if(v === 0) return obj;
+			var l = v - warfleetRemainingNetWorth[i];
+			var resName = resources[i].name.capitalize();
+			obj[resName] = beauty(l) + " (" + beauty(l / v * 100)+"%)";
+			return obj;
+		}, {}));
 
 		var basePath = location.protocol+'//'+location.host+location.pathname;
 		exporter.href = exporter.firstChild.alt = basePath+"#"+serialize(saveData);
