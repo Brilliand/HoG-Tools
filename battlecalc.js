@@ -328,6 +328,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 	shiplist.statBlock = span();
 	shiplist.statBlock.className = "statblock";
+	shiplist.statBlock.title = "Total resource value of your fleet";
 	shiplist.parentNode.appendChild(shiplist.statBlock);
 	shiplist.statBlockCombat = span();
 	shiplist.statBlockCombat.className = "statblock combat";
@@ -369,6 +370,7 @@ document.addEventListener("DOMContentLoaded", function() {
 	stufflist.parentNode.appendChild(stufflist.statBlock);
 	var resourcelosses = span();
 	resourcelosses.className = "statblock combat only";
+	resourcelosses.title = "Total resources lost in this fight (ships and inventory)";
 	stufflist.parentNode.appendChild(resourcelosses);
 
 	var enemylist = document.getElementById("enemylist");
@@ -416,6 +418,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 	enemylist.statBlock = span();
 	enemylist.statBlock.className = "statblock";
+	enemylist.statBlock.title = "Total resource value of enemy fleet";
 	enemylist.parentNode.appendChild(enemylist.statBlock);
 	enemylist.statBlockCombat = span();
 	enemylist.statBlockCombat.className = "statblock combat";
