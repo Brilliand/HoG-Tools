@@ -125,6 +125,10 @@ window.getBuildingsWanted = function(p, b) {
 			var planet = planets[p];
 			planet.structure.filter(function(built) {
 				return buildings[built.building].show(planet) && built.active;
+			}).sort(function(a, b) {
+				var ab = buildings[a.building], bb = buildings[b.building];
+				return (bb.type == "energy") - (ab.type == "energy")
+				    || (a.number) - (b.number);
 			}).map(function(built) {
 				var b = built.building;
 				var wanted = getBuildingsWanted(planet.id, b);
