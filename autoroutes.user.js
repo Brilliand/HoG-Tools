@@ -8,15 +8,18 @@
 // @grant        none
 // ==/UserScript==
 
+window.hubs = {};
+window.resourceHasHub = function(resid) {
+	return hubs.hasOwnProperty(resid) && game.searchPlanet(hubs[resid]);
+};
+
 (function() {
 	'use strict';
 
-	var hubs = {};
 	try {
 		hubs = JSON.parse(localStorage.getItem("HoGTools-AutorouteHubs")) || {};
 	} catch(e) {
 		console.error("Error in saved hubs:", e.stack);
-		hubs = {};
 	}
 	function saveHubs() {
 		localStorage.setItem("HoGTools-AutorouteHubs", JSON.stringify(hubs));
@@ -192,11 +195,17 @@
 				return buildings[built.building].show(planet) && built.active;
 			}).map(function(built) {
 				var building = buildings[built.building];
-				return building.rawProduction(planet).map(function(v) { return v * built.number; });
+				var n = built.number + (getBuildingsWanted ? getBuildingsWanted(planet.id, built.building) : 0);
+				return building.rawProduction(planet).map(function(v) { return (v < 0) ? v * n : v * built.number; });
 			}).reduce(function(total, v) {
 				return total.addSet(v);
 			}, Array(resNum).fill(0));
 		});
+		planetTransport.map(function(v, p) {
+			if(Object.keys(v).length == 0) {
+				planetProduction[p].fill(0);
+			}
+		}, Array());
 		var totalRes = planetProduction.reduce(function(total, v) {
 			v.map(function(v, k) { total[k] += v; });
 			return total;
@@ -228,6 +237,9 @@
 			var resIn = toTransport.map(function(v) { return v < 0 ? Math.ceil(-v * travelTime) : 0; });
 			canLeave = canLeave.multEach(travelTime).map(Math.ceil);
 
+			// Store for logging
+			var oldIn = resIn.slice(), oldOut = resOut.slice();
+
 			var outLeave = resOut.sum() - entry.route.storage;
 			if(outLeave > 0) {
 				var safeLeave = canLeave.sum();
@@ -240,6 +252,14 @@
 
 			var inLeave = resIn.sum() - entry.route.storage;
 			if(inLeave > 0) resIn = reduceResources(resIn, inLeave);
+
+			if(outLeave > 0 || inLeave > 0) console.log(planets[entry.from].name+"-"+planets[entry.to].name, oldIn.sub(resIn).reduce(function(obj, v, k) {
+				if(v) obj[resources[k].name] = v / travelTime;
+				return obj;
+			}, {}), oldOut.sub(resOut).reduce(function(obj, v, k) {
+				if(v) obj[resources[k].name] = v / travelTime;
+				return obj;
+			}, {}));
 
 			var fleet = entry.route.fleet;
 			fleet.autoRes[fleet.autoMap[entry.from]] = resOut;
