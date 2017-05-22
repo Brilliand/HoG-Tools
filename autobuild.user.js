@@ -126,7 +126,7 @@ window.getBuildingsWanted = function(p, b) {
 			planet.structure.filter(function(built) {
 				return buildings[built.building].show(planet) && built.active;
 			}).map(function(built) {
-                var b = built.building;
+				var b = built.building;
 				var wanted = getBuildingsWanted(planet.id, b);
 				var newlyBuilt = planet.fulfillQueuedStructure(b);
 				if(newlyBuilt) console.log(planet.name, buildings[b].displayName, newlyBuilt + " / " + wanted);
