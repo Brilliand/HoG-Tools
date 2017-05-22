@@ -11,7 +11,12 @@
 window.requests = {};
 window.setRequest = function(planetid, resid, quantity) {
 	requests[planetid] = requests[planetid] || {};
-	requests[planetid][resid] = (requests[planetid][resid] || 0) + quantity;
+	if(quantity == 0) {
+		delete requests[planetid][resid];
+		if(Object.keys(requests[planetid]).length == 0) delete requests[planetid];
+	} else {
+		requests[planetid][resid] = (requests[planetid][resid] || 0) + quantity;
+	}
 };
 window.getRequest = function(planetid, resid) {
 	return (requests[planetid] || {})[resid] || 0;
