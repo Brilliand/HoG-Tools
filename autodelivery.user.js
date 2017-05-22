@@ -299,7 +299,7 @@ window.getRequest = function(planetid, resid) {
 						var resource = v.resource;
 
 						v.planets.filter(function(p) {
-							return isFinite(travelCosts[p]) && game.searchPlanet(v);
+							return isFinite(travelCosts[p]) && game.searchPlanet(p);
 						}).map(function(p) {
 							missions.push({
 								planet: p,
@@ -313,7 +313,7 @@ window.getRequest = function(planetid, resid) {
 						var resource = v.resource;
 
 						v.planets.filter(function(p) {
-							return isFinite(travelCosts[p]) && game.searchPlanet(v);
+							return isFinite(travelCosts[p]) && game.searchPlanet(p);
 						}).map(function(p) {
 							missions.push({
 								planet: p,
