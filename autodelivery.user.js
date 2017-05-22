@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         HoG Tools - Automated Deliveries
 // @namespace    https://github.com/Brilliand/HoG-Tools
-// @version      1.0
+// @version      1.1
 // @description  Uses a group of designated fleets to handle resource requests
 // @author       Brilliand
 // @match        https://game274411.konggames.com/gamez/0027/4411/live/*

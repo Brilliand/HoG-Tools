@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         HoG Tools - Autoroute Manager
 // @namespace    https://github.com/Brilliand/HoG-Tools
-// @version      1.1
+// @version      1.2
 // @description  Provides automated autoroute handling with an arbitrary autoroute network and per-resource hubs
 // @author       Brilliand
 // @match        https://game274411.konggames.com/gamez/0027/4411/live/*
