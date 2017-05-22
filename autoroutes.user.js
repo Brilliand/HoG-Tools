@@ -285,4 +285,5 @@ window.resourceHasHub = function(resid) {
 			}
 		}
 	}
+	setInterval(updateRoutes, 60*1000);
 })();
