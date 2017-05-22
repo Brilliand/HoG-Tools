@@ -218,6 +218,7 @@ window.getRequest = function(planetid, resid) {
 						return total.addSet(v);
 					}, planetRequest);
 				}
+				planetRequest = planetRequest.map(function(v) { return Math.max(v, 0); });
 				return planetRequest;
 			}).filterInplace(Boolean);
 			availableFreighters.map(function(v) {
