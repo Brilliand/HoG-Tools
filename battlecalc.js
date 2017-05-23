@@ -109,8 +109,8 @@ document.addEventListener("DOMContentLoaded", function() {
 				var piercingBonus = result.toughness * enemyDR / (n * enemyShip.hp);
 				var modifiedPower = speedred(enemyShip.speed * bonus.speed, shipStats.Speed, enemyShip.combatWeight) * piercingBonus * shipStats.Power;
 				result.effect = result.toughness / modifiedPower;
-				var weightPercent = n * enemyShip.combatWeight / fleetWeight;
-				result.powerEffect = weightPercent * modifiedPower * result.power / result.toughness;
+				if(isNaN(result.harm)) result.harm = Infinity;
+				if(isNaN(result.effect)) result.effect = 0;
 				return result;
 			}).reduce(function(obj, v) {
 				for(var k in v) obj[k] += v[k];
@@ -120,7 +120,6 @@ document.addEventListener("DOMContentLoaded", function() {
 				harm: 0,
 				toughness: 0,
 				effect: 0,
-				powerEffect: 0,
 			});
 			if(netEffect.harm) shipStats["Adjusted Toughness"] = netEffect.power / netEffect.harm;
 			if(netEffect.harm && shipStats.Duration) shipStats.Duration /= netEffect.harm;
