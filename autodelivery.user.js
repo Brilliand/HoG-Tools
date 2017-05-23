@@ -142,6 +142,8 @@ window.getRequest = function(planetid, resid) {
 		}).attr("id", "deliveriesov_button");
 		deliveriesov_button.find("*").last().text("Deliveries");
 		deliveriesov_button.insertAfter($("#autoroutesov_button"));
+
+		$("#ship_info_placeholder").css("height", $("#ship_mini_list")[0].scrollHeight + 16 + "px");
 	});
 	var options = {
 		childList: true,
