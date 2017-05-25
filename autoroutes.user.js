@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         HoG Tools - Autoroute Manager
 // @namespace    https://github.com/Brilliand/HoG-Tools
-// @version      1.2
+// @version      1.3
 // @description  Provides automated autoroute handling with an arbitrary autoroute network and per-resource hubs
 // @author       Brilliand
 // @match        https://game274411.konggames.com/gamez/0027/4411/live/*
@@ -201,15 +201,33 @@ window.resourceHasHub = function(resid) {
 				return total.addSet(v);
 			}, Array(resNum).fill(0));
 		});
-		planetTransport.map(function(v, p) {
-			if(Object.keys(v).length == 0) {
-				planetProduction[p].fill(0);
+
+		var planetGroups = Array();
+		var ungroupedPlanets = game.planets.reduce(function(obj, v) { obj[v] = null; return obj; }, {});
+		while(Object.keys(ungroupedPlanets).length) {
+			var definer = Object.keys(ungroupedPlanets)[0];
+			var planetGroup = [definer];
+			for(var i = 0; i < planetGroup.length; i++) {
+				delete ungroupedPlanets[planetGroup[i]];
+				Object.keys(planetTransport[planetGroup[i]]).map(function(v) {
+					if(ungroupedPlanets.hasOwnProperty(v)) planetGroup.push(v);
+				});
 			}
-		}, Array());
-		var totalRes = planetProduction.reduce(function(total, v) {
-			v.map(function(v, k) { total[k] += v; });
-			return total;
-		}, Array(resNum).fill(0));
+			planetGroups.push(planetGroup);
+		}
+		planetGroups = planetGroups.reduce(function(obj, v) {
+			var entry = {};
+			entry.planets = v;
+			entry.totalRes = v.reduce(function(total, p) {
+				var v = planetProduction[p];
+				v.map(function(v, k) { total[k] += v; });
+				return total;
+			}, Array(resNum).fill(0));
+			v.map(function(p) {
+				obj[p] = entry;
+			});
+			return obj;
+		}, {});
 
 		for(var i = 0; i < planetQueue.length; i++) {
 			var entry = planetQueue[i];
@@ -218,13 +236,13 @@ window.resourceHasHub = function(resid) {
 			var canLeave = Array(resNum).fill(0);
 			var toTransport = prod.map(function(v, k) {
 				if(hubs[k] == entry.from) {
-					return v - totalRes[k];
+					return v - planetGroups[entry.from].totalRes[k];
 				} else if(v < 0) {
 					return v;
 				} else {
 					var toSpare = v + Math.min(planetProduction[entry.to][k], 0);
-					var leaveBehind = Math.max(Math.min(toSpare, totalRes[k]), 0);
-					if(hubs.hasOwnProperty(k) && game.searchPlanet(hubs[k])) {
+					var leaveBehind = Math.max(Math.min(toSpare, planetGroups[entry.from].totalRes[k]), 0);
+					if(hubs.hasOwnProperty(k) && planetGroups[hubs[k]] === planetGroups[entry.from]) {
 						canLeave[k] = leaveBehind;
 						return v;
 					} else {
@@ -266,7 +284,7 @@ window.resourceHasHub = function(resid) {
 			fleet.autoRes[fleet.autoMap[entry.to]] = resIn;
 
 			var netTransport = resOut.sub(resIn).multEach(1 / travelTime);
-			totalRes.addSet(netTransport.sub(prod));
+			planetGroups[entry.from].totalRes.addSet(netTransport.sub(prod));
 			planetProduction[entry.from].addSet(netTransport.multEach(-1));
 			planetProduction[entry.to].addSet(netTransport);
 
