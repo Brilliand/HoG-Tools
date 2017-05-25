@@ -46,6 +46,11 @@ window.getRequest = function(planetid, resid) {
 			return v - a[i];
 		});
 	};
+	Array.prototype.multEach = function(n) {
+		return this.map(function(v, i) {
+			return v *= n;
+		});
+	};
 	Array.prototype.sum = function() {
 		return this.reduce(function(a, b) { return a + b; }, 0);
 	};
@@ -243,6 +248,22 @@ window.getRequest = function(planetid, resid) {
 						shortages[k][p] = -v;
 					}
 				});
+			});
+
+			var now = (new Date()).getTime();
+			fleetSchedule.civisFleet(game.id).filter(function(route) {
+				return route.type == "auto";
+			}).map(function(route) {
+				var a = route.origin, b = route.destination;
+				var fleet = fleetSchedule.fleets[route.fleet];
+				var travelTime = parseInt(Math.floor(2 * planets[a].shortestPath[b].distance / (idleBon * fleet.speed())));
+				var ar = fleet.autoRes[fleet.autoMap[a]], br = fleet.autoRes[fleet.autoMap[b]];
+
+				var timeRemaining = Math.max((route.totalTime - now) / idleBon, (planets[a].shortestPath[b].hops - route.hop) / fpsFleet);
+				var timeTotal = Math.max(travelTime / 2, planets[a].shortestPath[b].hops / fpsFleet);
+				var routeTraveled = Math.max(1 - timeRemaining / timeTotal, 0) / 2;
+				planetRequests[a].addSet(br.sub(br.sub(ar).multEach(routeTraveled)));
+				planetRequests[b].addSet(ar.sub(ar.sub(br).multEach(routeTraveled + 0.5)));
 			});
 			fleetSchedule.civisFleet(game.id).filter(function(route) {
 				return route.type == "auto_delivery";
