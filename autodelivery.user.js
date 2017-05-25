@@ -422,8 +422,10 @@ window.getRequest = function(planetid, resid) {
 					transportFleet.beginTransportMission(p, destination.planet);
 					if(fleet === transportFleet) return;
 				}
-				if(p != planetsName.santorini && game.searchPlanet(planetsName.santorini)) {
+				if(p != planetsName.santorini && game.searchPlanet(planetsName.santorini) && paths[planetsName.santorini]) {
 					fleet.beginTransportMission(p, planetsName.santorini);
+				} else if(p != planetsName.solidad && game.searchPlanet(planetsName.solidad) && paths[planetsName.solidad]) {
+					fleet.beginTransportMission(p, planetsName.solidad);
 				}
 			});
 			if("shipInterface" == currentInterface) $("#overview_button").click();
