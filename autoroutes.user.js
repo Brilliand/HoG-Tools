@@ -195,7 +195,8 @@ window.resourceHasHub = function(resid) {
 				return buildings[built.building].show(planet) && built.active;
 			}).map(function(built) {
 				var building = buildings[built.building];
-				var n = built.number + (getBuildingsWanted ? getBuildingsWanted(planet.id, built.building) : 0);
+				var n = built.number;
+				if(typeof getBuildingsWanted !== "undefined") n += getBuildingsWanted(planet.id, built.building);
 				return building.rawProduction(planet).map(function(v) { return (v < 0) ? v * n : v * built.number; });
 			}).reduce(function(total, v) {
 				return total.addSet(v);
