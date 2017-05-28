@@ -189,6 +189,44 @@ window.resourceHasHub = function(resid) {
 			}
 			return arr;
 		}, Array());
+		function dropWorstFleet() {
+			var droppableFleets = planetTransport.reduce(function(arr, v, k) {
+				Object.keys(v).map(function(p) {
+					var route = v[p];
+					arr.push({
+						from: k,
+						to: p,
+						route: route,
+					});
+				});
+				return arr;
+			}, Array()).sort(function(a, b) { return a.route.time - b.route.time; });
+			while(droppableFleets.length) {
+				var entry = droppableFleets.pop();
+				if(!planetTransport[entry.from][entry.to]) continue;
+
+				entry.route.fleet.type = "normal";
+				delete planetTransport[entry.from][entry.to];
+				delete planetTransport[entry.to][entry.from];
+
+				var canContinue = false;
+				planetQueue = planetTransport.reduce(function(arr, v, k) {
+					if(Object.keys(v).length == 1) {
+						var planetid = Object.keys(v)[0];
+						var route = v[planetid];
+						arr.push({
+							from: k,
+							to: planetid,
+							route: route,
+						});
+						canContinue = true;
+					}
+					return arr;
+				}, planetQueue);
+				if(canContinue) return true;
+			}
+			return false;
+		}
 
 		var planetProduction = planets.map(function(planet) {
 			return planet.structure.filter(function(built) {
@@ -230,7 +268,7 @@ window.resourceHasHub = function(resid) {
 			return obj;
 		}, {});
 
-		for(var i = 0; i < planetQueue.length; i++) {
+		for(var i = 0; i < planetQueue.length || dropWorstFleet(); i++) {
 			var entry = planetQueue[i];
 			if(!planetTransport[entry.from][entry.to]) continue;
 			var prod = planetProduction[entry.from];
