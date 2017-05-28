@@ -271,11 +271,11 @@ window.resourceHasHub = function(resid) {
 			var inLeave = resIn.sum() - entry.route.storage;
 			if(inLeave > 0) resIn = reduceResources(resIn, inLeave);
 
-			if(outLeave > 0 || inLeave > 0) console.log(planets[entry.from].name+"-"+planets[entry.to].name, oldIn.sub(resIn).reduce(function(obj, v, k) {
-				if(v) obj[resources[k].name] = v / travelTime;
+			if(outLeave > 0 || inLeave > 0) console.log("Autoroute", planets[entry.from].name+"-"+planets[entry.to].name, "short on space for", oldIn.sub(resIn).reduce(function(obj, v, k) {
+				if(v) obj[resources[k].name] = beauty(v) + " (" + beauty(v / travelTime) + "/s)";
 				return obj;
 			}, {}), oldOut.sub(resOut).reduce(function(obj, v, k) {
-				if(v) obj[resources[k].name] = v / travelTime;
+				if(v) obj[resources[k].name] = beauty(v) + " (" + beauty(v / travelTime) + "/s)";
 				return obj;
 			}, {}));
 
