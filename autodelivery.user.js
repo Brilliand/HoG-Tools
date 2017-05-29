@@ -136,6 +136,22 @@ window.getRequest = function(planetid, resid) {
 
 		return newFleet;
 	};
+	function reduceResources(res, reduceBy) {
+		var sizes = res.slice().sort(function(a, b) { return a - b; });
+		var sum = 0, n = 0, cap;
+		while(sizes.length) {
+			var v = sizes.pop();
+			if(cap >= v)
+				break;
+			sum += v;
+			n++;
+			cap = Math.floor((sum - reduceBy) / n);
+		}
+		var ncapped = 0;
+		res = res.map(function(v) { if(v <= cap) return v; ncapped++; return cap; });
+		res.ncapped = ncapped;
+		return res;
+	}
 
 	// Hook into game interface
 	var observer = new MutationObserver(function(mutation) {
@@ -240,6 +256,7 @@ window.getRequest = function(planetid, resid) {
 					fleet.unload(p);
 				}
 			});
+
 			var shortages = {};
 			planetRequests.map(function(requests, p) {
 				planets[p].resources.sub(requests).map(function(v, k) {
@@ -248,6 +265,19 @@ window.getRequest = function(planetid, resid) {
 						shortages[k][p] = -v;
 					}
 				});
+			});
+			fleetSchedule.civisFleet(game.id).filter(function(route) {
+				return route.type == "auto_delivery";
+			}).map(function(route) {
+				var p = route.destination;
+				var fleet = fleetSchedule.fleets[route.fleet];
+				for(var k in shortages) {
+					if(shortages[k][p] && fleet.storage[k]) {
+						shortages[k][p] -= fleet.storage[k];
+						if(shortages[k][p] <= 0) delete shortages[k][p];
+						if(Object.keys(shortages[k]).length == 0) delete shortages[k];
+					}
+				}
 			});
 
 			var now = (new Date()).getTime();
@@ -265,19 +295,7 @@ window.getRequest = function(planetid, resid) {
 				planetRequests[a].addSet(br.sub(br.sub(ar).multEach(routeTraveled)));
 				planetRequests[b].addSet(ar.sub(ar.sub(br).multEach(routeTraveled + 0.5)));
 			});
-			fleetSchedule.civisFleet(game.id).filter(function(route) {
-				return route.type == "auto_delivery";
-			}).map(function(route) {
-				var p = route.destination;
-				var fleet = fleetSchedule.fleets[route.fleet];
-				for(var k in shortages) {
-					if(shortages[k][p] && fleet.storage[k]) {
-						shortages[k][p] -= fleet.storage[k];
-						if(shortages[k][p] <= 0) delete shortages[k][p];
-						if(Object.keys(shortages[k]).length == 0) delete shortages[k];
-					}
-				}
-			});
+
 			console.log("Preparing transports for:", resources.map(function(resource, r) {
 				var abundance = planetRequests.map(function(requests, p) {
 					var excess = planets[p].resources[r] - requests[r];
@@ -291,7 +309,7 @@ window.getRequest = function(planetid, resid) {
 				if(v) obj[resources[k].name.capitalize()] = v;
 				return obj;
 			}, {}));
-			availableFreighters.map(function(v) {
+			availableFreighters = availableFreighters.filter(function(v) {
 				var p = v.planet;
 				var planet = planets[p];
 				var paths = planets[p].shortestPath;
@@ -303,7 +321,7 @@ window.getRequest = function(planetid, resid) {
 
 				if(planetRequests[p]) {
 					var excesses = planet.resources.sub(planetRequests[p]).filterInplace(function(v, k) {
-						return v > minStorage;
+						return v > 0;
 					});
 					var shortageMissions = excesses.map(function(v, k) {
 						if(!shortages[k]) return false;
@@ -323,18 +341,24 @@ window.getRequest = function(planetid, resid) {
 							planets: locations,
 						};
 					}).filter(Boolean);
-					var missions = Array();
+					var missionPlanets = game.planets.reduce(function(obj, p) {
+						if(isFinite(travelCosts[p])) obj[p] = {
+							planet: p,
+							distance: travelCosts[p],
+							resources: Array(),
+						};
+						return obj;
+					}, {});
 					shortageMissions.map(function(v) {
 						var resource = v.resource;
 
 						v.planets.filter(function(p) {
-							return isFinite(travelCosts[p]) && game.searchPlanet(p);
+							return missionPlanets[p];
 						}).map(function(p) {
-							missions.push({
-								planet: p,
-								distance: travelCosts[p] + Math.random(),
+							missionPlanets[p].resources.push({
 								resource: resource,
 								value: 2,
+								priority: Math.random(),
 							});
 						});
 					});
@@ -342,115 +366,175 @@ window.getRequest = function(planetid, resid) {
 						var resource = v.resource;
 
 						v.planets.filter(function(p) {
-							return isFinite(travelCosts[p]) && game.searchPlanet(p);
+							return missionPlanets[p];
 						}).map(function(p) {
-							missions.push({
-								planet: p,
-								distance: travelCosts[p] + Math.random(),
+							missionPlanets[p].resources.push({
 								resource: resource,
 								value: 1,
+								priority: Math.random(),
 							});
 						});
 					});
-					missions.sort(function(a, b) { return a.value - b.value || b.distance - a.distance; });
+					var missions = Object.values(missionPlanets).filter(function(v) {
+						return v.resources.length;
+					}).map(function(v) {
+						v.resources.sort(function(a, b) { return a.value - b.value || a.priority - b.priority; });
+						v.value = v.resources[0].value;
+						v.amount = v.resources.map(function(v) {
+							return v.amount;
+						}).sum();
+						return v;
+					}).sort(function(a, b) {
+						var as = Math.min(minStorage, a.amount), bs = Math.min(minStorage, b.amount);
+						return a.value - b.value || b.distance * as - a.distance * bs;
+					});
 					while(missions.length) {
 						var mission = missions.pop();
-						var missionRes = mission.resource;
 
-						var maxAmount = planet.resources[missionRes] - planetRequests[p][missionRes];
-						var minAmount = (shortages[missionRes] && shortages[missionRes][mission.planet]) || 0;
-						if(hubs && hubs[missionRes] == mission.planet) minAmount = maxAmount;
-						var storage = 0;
+						var storageMax = fleet.maxStorage();
+						var storageRes = 0;
+						var transport = mission.resources.reduce(function(transport, v) {
+							var r = v.resource;
+							var maxAmount;
+							if(hubs && hubs[v.resource] == mission.planet) maxAmount = Infinity;
+							else maxAmount = (shortages[r] && shortages[r][mission.planet]) || 0;
+							maxAmount = Math.min(Math.ceil(maxAmount), Math.floor(planet.resources[r] - planetRequests[p][r]));
+							if(maxAmount == 0 || storageRes >= storageMax) {
+								return transport;
+							} else if(storageRes + maxAmount <= storageMax) {
+								transport[r] = maxAmount;
+								storageRes += maxAmount;
+							} else {
+								transport[r] = storageMax - storageRes;
+								storageRes = storageMax;
+							}
+							return transport;
+						}, Array());
+
+						var storageReserved = 0;
 						var transportShips = fleet.ships.map(function(n, s) {
 							var ship = ships[s];
 							if(n == 0 || ship.maxStorage == 0) return 0;
-							if(ship.maxStorage * n > maxAmount - storage) n = Math.floor((maxAmount - storage) / ship.maxStorage);
-							if(ship.maxStorage * n > minAmount - storage) n = Math.ceil((minAmount - storage) / ship.maxStorage);
-							storage += ship.maxStorage * n;
+							if(ship.maxStorage * n > storageRes - storageReserved) n = Math.ceil((storageRes - storageReserved) / ship.maxStorage);
+							storageReserved += ship.maxStorage * n;
 							return n;
 						});
-						if(storage == 0) continue;
+						if(storageReserved == 0) continue;
 
-						if(shortages[missionRes] && shortages[missionRes][mission.planet]) {
-							shortages[missionRes][mission.planet] -= storage;
-							if(shortages[missionRes][mission.planet] <= 0) delete shortages[missionRes][mission.planet];
-							if(Object.keys(shortages[missionRes]).length == 0) delete shortages[missionRes];
+						if(storageReserved < storageRes) {
+							transport = reduceResources(transport, storageRes - storageReserved);
 						}
 
-						var transport = Array();
-						transport[missionRes] = storage;
+						transport.map(function(v, r) {
+							if(shortages[r] && shortages[r][mission.planet]) {
+								shortages[r][mission.planet] -= v;
+								if(shortages[r][mission.planet] <= 0) delete shortages[r][mission.planet];
+								if(Object.keys(shortages[r]).length == 0) delete shortages[r];
+							}
+						});
+
 						var transportFleet = fleet.divideFleet(p, transportShips, fleet.name);
 						transportFleet.beginTransportMission(p, mission.planet, transport);
-						if(fleet === transportFleet) return;
+						if(fleet === transportFleet) return false;
 					}
 				}
 
-				var shortageRes = {};
-				for(var k in shortages) for(var i in shortages[k]) if(paths[i]) shortageRes[k] = true;
-				var hubRes = {};
-				if(hubs) for(var k in hubs) if(paths[hubs[k]]) hubRes[k] = true;
-				var destinations = travelCosts.map(function(v, k) {
-					var obj = {
-						planet: k,
-						distance: v,
-						value: 0,
-					};
-					if(!planetRequests[k]) return obj;
+				return true;
+			});
 
-					var excesses = planets[k].resources.sub(planetRequests[k]);
-					for(var i in shortageRes) {
-						if(excesses[i] > minStorage) {
-							obj.value = 2;
-							obj.resource = i;
-							obj.amount = excesses[i];
-							return obj;
-						}
+			var pickupSources = game.planets.map(function(k) {
+				var obj = {
+					planet: k,
+					value: 0,
+					amount: 0,
+				};
+				if(!planetRequests[k]) return obj;
+
+				var excesses = planets[k].resources.sub(planetRequests[k]);
+				var amounts = {};
+				for(var i in shortages) {
+					var shortageAmount = Object.entries(shortages[i]).reduce(function(total, v) {
+						if(planets[k].shortestPath[v[0]]) total += v[1];
+						return total;
+					}, 0);
+					if(excesses[i] > 0 && shortageAmount > 0) {
+						obj.value = 2;
+						amounts[i] = Math.min(excesses[i], shortageAmount);
 					}
-					for(var i in hubRes) {
-						if(excesses[i] > minStorage && !(hubs && hubs[i] == k)) {
-							obj.value = 1;
-							obj.resource = i;
-							obj.amount = excesses[i];
-							return obj;
-						}
+				}
+				for(var i in hubs) {
+					var hubReachable = [hubs[i]].filter(function(v) {
+						return planets[k].shortestPath[v] && k != v;
+					}).length;
+					if(excesses[i] > 0 && hubReachable) {
+						if(obj.value < 1) obj.value = 1;
+						amounts[i] = excesses[i];
 					}
-					return obj;
-				}).filter(function(v) {
-					return v.value > 0;
+				}
+				obj.amount = Object.values(amounts).sum();
+				return obj;
+			}).filter(function(v) {
+				return v.value > 0;
+			}).reduce(function(obj, v) {
+				obj[v.planet] = v;
+				return obj;
+			}, {});
+			availableFreighters = availableFreighters.filter(function(v) {
+				var p = v.planet;
+				var planet = planets[p];
+				var paths = planets[p].shortestPath;
+				var fleet = v.fleet;
+				var minStorage = fleet.ships.map(function(v, k) { if(v) return ships[k].maxStorage; }).filter(Boolean).min();
+
+				// Add some variety to fleet destination choices
+				var travelCosts = paths.map(function(v) { return v.distance * (1 + Math.random()); });
+
+				var destinations = Object.values(pickupSources).filter(function(v) {
+					return travelCosts[v.planet];
 				}).sort(function(a, b) {
-					return a.value - b.value || b.distance - a.distance;
+					var as = Math.min(minStorage, a.amount), bs = Math.min(minStorage, b.amount);
+					return a.value - b.value || as - bs || travelCosts[b.planet] - travelCosts[a.planet];
 				});
-				var goneForResource = {};
 				while(destinations.length) {
 					var destination = destinations.pop();
 
 					if(destination.planet == p) continue;
-					if(goneForResource[destination.resource]) continue;
-					goneForResource[destination.resource] = true;
 
 					var maxAmount = destination.amount;
-					var storage = 0;
+					var storageReserved = 0;
 					var transportShips = fleet.ships.map(function(n, s) {
 						var ship = ships[s];
 						if(n == 0 || ship.maxStorage == 0) return 0;
-						if(ship.maxStorage * n > maxAmount - storage) n = Math.floor((maxAmount - storage) / ship.maxStorage);
-						storage += ship.maxStorage * n;
+						if(ship.maxStorage * n > maxAmount - storageReserved) n = Math.ceil((maxAmount - storageReserved) / ship.maxStorage);
+						storageReserved += ship.maxStorage * n;
 						return n;
 					});
-					if(storage == 0) continue;
+
+					destination.amount -= storageReserved;
+					if(destination.amount <= 0) delete pickupSources[destination.planet];
 
 					var transportFleet = fleet.divideFleet(p, transportShips, fleet.name);
 					transportFleet.beginTransportMission(p, destination.planet);
-					if(fleet === transportFleet) return;
+					if(fleet === transportFleet) return false;
 				}
+
+				return true;
+			});
+
+			availableFreighters.map(function(v) {
+				var p = v.planet;
+				var paths = planets[p].shortestPath;
+				var fleet = v.fleet;
+
 				if(p != planetsName.santorini && game.searchPlanet(planetsName.santorini) && paths[planetsName.santorini]) {
 					fleet.beginTransportMission(p, planetsName.santorini);
 				} else if(p != planetsName.solidad && game.searchPlanet(planetsName.solidad) && paths[planetsName.solidad]) {
 					fleet.beginTransportMission(p, planetsName.solidad);
 				}
 			});
+
 			if("shipInterface" == currentInterface) $("#overview_button").click();
-			if("travelingShipInterface" == currentInterface) exportTravelingShipInterface(currentCriteriaAuto);
+			if("travelingShipInterface" == currentInterface && "auto_delivery" == currentCriteriaAuto) exportTravelingShipInterface(currentCriteriaAuto);
 		}
 	}
 	setInterval(doFreightMovement, 2*60*1000);
