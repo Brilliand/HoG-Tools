@@ -34,6 +34,9 @@ window.getRequest = function(planetid, resid) {
 		localStorage.setItem("HoGTools-ResourcesRequested", JSON.stringify(requests));
 	}
 
+	// Static Configuration
+	var productionBufferTime = 10 * 60;
+
 	// Helper functions
 	Array.prototype.addSet = function(a) {
 		for(var i = 0; i < this.length; i++) {
@@ -257,6 +260,25 @@ window.getRequest = function(planetid, resid) {
 				}
 			});
 
+			var planetProduction = planets.map(function(planet) {
+				return planet.structure.filter(function(built) {
+					return buildings[built.building].show(planet) && built.active;
+				}).map(function(built) {
+					var building = buildings[built.building];
+					var n = built.number;
+					if(typeof getBuildingsWanted !== "undefined") n += getBuildingsWanted(planet.id, built.building);
+					return building.rawProduction(planet).map(function(v) { return (v < 0) ? v * n : v * built.number; });
+				}).reduce(function(total, v) {
+					return total.addSet(v);
+				}, Array(resNum).fill(0));
+			});
+			planetProduction.map(function(prod, p) {
+				if(planetRequests[p]) planetRequests[p].addSet(prod.map(function(v) {
+					var bufferNeeded = -v * productionBufferTime;
+					return Math.max(bufferNeeded, 0);
+				}));
+			});
+
 			var shortages = {};
 			planetRequests.map(function(requests, p) {
 				planets[p].resources.sub(requests).map(function(v, k) {
@@ -278,6 +300,12 @@ window.getRequest = function(planetid, resid) {
 						if(Object.keys(shortages[k]).length == 0) delete shortages[k];
 					}
 				}
+			});
+			planetProduction.map(function(prod, p) {
+				if(planetRequests[p]) prod.map(function(v, r) {
+					var bufferNeeded = -v * productionBufferTime;
+					if(bufferNeeded > 0 && shortages[r] && shortages[r][p]) shortages[r][p] += bufferNeeded;
+				});
 			});
 
 			var now = (new Date()).getTime();
@@ -321,7 +349,7 @@ window.getRequest = function(planetid, resid) {
 
 				if(planetRequests[p]) {
 					var excesses = planet.resources.sub(planetRequests[p]).filterInplace(function(v, k) {
-						return v > 0;
+						return v > Math.max(0, planetProduction[p][k] * productionBufferTime);
 					});
 					var shortageMissions = excesses.map(function(v, k) {
 						if(!shortages[k]) return false;
