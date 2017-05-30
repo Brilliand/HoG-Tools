@@ -234,7 +234,7 @@ window.getRequest = function(planetid, resid) {
 			var planetRequests = planets.map(function(planet, p) {
 				if(!game.searchPlanet(p)) return null;
 				var planetRequest = Array(resNum).fill(p).map(getRequest);
-				if(getBuildingsWanted) {
+				if(typeof getBuildingsWanted !== "undefined") {
 					planetRequest = planet.structure.filter(function(built) {
 						return buildings[built.building].show(planet) && built.active;
 					}).map(function(built) {
