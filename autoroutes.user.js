@@ -33,7 +33,7 @@ window.getResourceHubs = function(resid) {
 
 	try {
 		hubs = JSON.parse(localStorage.getItem("HoGTools-AutorouteHubs")) || {};
-		for(var i in hubs) if(typeof hubs[i] === "number") {
+		for(var i in hubs) if(typeof hubs[i] === "number" || typeof hubs[i] === "string") {
 			var n = hubs[i];
 			hubs[i] = {};
 			hubs[i][n] = true;

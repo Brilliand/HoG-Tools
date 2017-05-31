@@ -34,6 +34,7 @@ if(typeof getResourceHubs === "undefined") {
 		var results = Array();
 		switch(typeof hubs[resid]) {
 		case "number":
+		case "string":
 			results.push(hubs[resid]);
 			break;
 		case "object":
