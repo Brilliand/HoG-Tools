@@ -353,10 +353,20 @@ if(typeof getResourceHubs === "undefined") {
 					var excess = planets[p].resources[r] - requests[r];
 					if(excess > 0) return excess;
 					else return 0;
-				}).sum();
-				var shortage = Object.values(shortages[r] || {}).sum();
+				}).reduce(function(arr, v, p) {
+					var nebula = planets[p].map;
+					arr[nebula] = (arr[nebula] || 0) + v;
+					return arr;
+				}, Array());
+				var shortage = Object.entries(shortages[r] || {}).reduce(function(arr, v) {
+					var nebula = planets[v[0]].map;
+					arr[nebula] = (arr[nebula] || 0) + v[1];
+					return arr;
+				}, Array());
+				abundance = abundance.map(function(v, k) { return Math.min(v, shortage[k] || 0); }).sum();
+				shortage = shortage.sum();
 				if(shortage == 0) return false;
-				return (abundance > shortage) ? beauty(shortage) : beauty(abundance) + "/" + beauty(shortage);
+				return (abundance >= shortage) ? beauty(shortage) : beauty(abundance) + "/" + beauty(shortage);
 			}).reduce(function(obj, v, k) {
 				if(v) obj[resources[k].name.capitalize()] = v;
 				return obj;
