@@ -152,13 +152,14 @@ window.getShipsWanted = function(p, s) {
 				var wanted = getShipsWanted(planet.id, s);
 				var newlyBuilt = planet.fulfillQueuedShip(s);
 				if(newlyBuilt) console.log(planet.name, ship.name, newlyBuilt + " / " + wanted);
-				setShipsWanted(wanted - newlyBuilt);
+				setShipsWanted(planet.id, s, wanted - newlyBuilt);
 			});
 			if(planet.shipyardFleet.weight() && !planet.shipyardFleet.pushed) {
 				planet.fleetPush(planet.shipyardFleet);
 				planet.shipyardFleet.pushed = true;
 			}
 		});
+		saveShipsWanted();
 	}
 	setInterval(doQueuedConstruction, 60*1000);
 })();
