@@ -274,6 +274,16 @@ if(typeof getResourceHubs === "undefined") {
 						return total.addSet(v);
 					}, planetRequest);
 				}
+				if(typeof getShipsWanted !== "undefined") {
+					planetRequest = game.ships.filter(function(ship) {
+						return ship.show() && ship.req <= planet.structure[buildingsName.shipyard].number;
+					}).map(function(ship) {
+						var n = getShipsWanted(planet.id, ship.id);
+						return ship.cost.multEach(n);
+					}).reduce(function(total, v) {
+						return total.addSet(v);
+					}, planetRequest);
+				}
 				planetRequest = planetRequest.map(function(v) { return Math.max(v, 0); });
 				return planetRequest;
 			}).filterInplace(Boolean);
