@@ -79,7 +79,7 @@ document.addEventListener("DOMContentLoaded", function() {
 			Piercing: (ship.piercing || 0),
 			Armor: ship.armor,
 			HP: ship.hp,
-			"Piercing Power": ship.power * (ship.piercing || 0) / 100,
+			"Piercing Power": ship.power * Math.min((ship.piercing || 0) / 100, 1),
 			Toughness: ship.hp / (1 - dmgred(ship.armor)),
 			Speed: ship.speed,
 			Weight: ship.combatWeight,
@@ -346,7 +346,7 @@ document.addEventListener("DOMContentLoaded", function() {
 		input.showValue = span();
 		return div(label, input, input.showValue);
 	}).map(appendTo(stufflist));
-	["artofwar"].map(function(name) {
+	["artofwar", "karan_artofwar"].map(function(name) {
 		var research = researches[researchesName[name]];
 		var label = span(txt(research.name));
 		var input = el("input");
@@ -613,7 +613,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 		nextrun.href = basePath+"#"+serialize({
 			ships: warfleet.ships.reduce(function(obj, v, k) { if(v > 0) obj[k] = v; return obj; }, {}),
-			bonuses: ["artofwar"].reduce(function(obj, name) {
+			bonuses: ["artofwar", "karan_artofwar"].reduce(function(obj, name) {
 				var research = researches[researchesName[name]];
 				var v = research.level;
 				if(v > 0) obj[name] = v;
