@@ -9,8 +9,23 @@
 // ==/UserScript==
 
 window.hubs = {};
-window.resourceHasHub = function(resid) {
-	return hubs.hasOwnProperty(resid) && game.searchPlanet(hubs[resid]);
+window.addHub = function(resid, planetid) {
+	hubs[resid] = hubs[resid] || {};
+	hubs[resid][planetid] = true;
+};
+window.remHub = function(resid, planetid) {
+	if(hubs[resid]) {
+		delete hubs[resid][planetid];
+		if(Object.keys(hubs[resid]).length === 0) delete hubs[resid];
+	}
+};
+window.isHub = function(resid, planetid) {
+	return hubs.hasOwnProperty(resid) && hubs[resid][planetid];
+};
+window.getResourceHubs = function(resid) {
+	return Object.keys(hubs[resid] || {}).filter(function(p) {
+		return game.searchPlanet(p);
+	});
 };
 
 (function() {
@@ -18,6 +33,11 @@ window.resourceHasHub = function(resid) {
 
 	try {
 		hubs = JSON.parse(localStorage.getItem("HoGTools-AutorouteHubs")) || {};
+		for(var i in hubs) if(typeof hubs[i] === "number") {
+			var n = hubs[i];
+			hubs[i] = {};
+			hubs[i][n] = true;
+		}
 	} catch(e) {
 		console.error("Error in saved hubs:", e.stack);
 	}
@@ -124,22 +144,27 @@ window.resourceHasHub = function(resid) {
 				resid: r,
 			}).click(function(e) {
 				e.stopPropagation();
-				if(hubs[r] == p) {
-					delete hubs[r];
+				if(isHub(r, p)) {
+					remHub(r, p);
 					$(this).css(inactive_style).attr("title", "Set Hub");
 				} else {
-					if(typeof hubs[r] === "number") {
+					var nebula = planets[p].map;
+					getResourceHubs(r).filter(function(p) {
+						return planets[p].map == nebula;
+					}).map(function(p) {
+						remHub(r, p);
 						$(".hub_button").filter(function() { 
 							return $(this).data("resid") == r
-							    && $(this).data("planetid") == hubs[r];
+							    && $(this).data("planetid") == p;
 						}).css(inactive_style).attr("title", "Set Hub");
-					}
-					hubs[r] = p;
+					});
+
+					addHub(r, p);
 					$(this).css(active_style).attr("title", "Clear Hub");
 				}
 				saveHubs();
 				updateRoutes();
-			}).css((hubs[r] == p) ? active_style : inactive_style).attr("title", (hubs[r] == p) ? "Clear Hub" : "Set Hub");
+			}).css(isHub(r, p) ? active_style : inactive_style).attr("title", isHub(r, p) ? "Clear Hub" : "Set Hub");
 			return hub_button;
 		});
 	});
@@ -274,14 +299,16 @@ window.resourceHasHub = function(resid) {
 			var prod = planetProduction[entry.from];
 			var canLeave = Array(resNum).fill(0);
 			var toTransport = prod.map(function(v, k) {
-				if(hubs[k] == entry.from) {
+				if(isHub(k, entry.from)) {
 					return v - planetGroups[entry.from].totalRes[k];
 				} else if(v < 0) {
 					return v;
 				} else {
 					var toSpare = v + Math.min(planetProduction[entry.to][k], 0);
 					var leaveBehind = Math.max(Math.min(toSpare, planetGroups[entry.from].totalRes[k]), 0);
-					if(hubs.hasOwnProperty(k) && planetGroups[hubs[k]] === planetGroups[entry.from]) {
+					if(getResourceHubs(k).filter(function(p) {
+						return planetGroups[p] === planetGroups[entry.from];
+					}).length) {
 						canLeave[k] = leaveBehind;
 						return v;
 					} else {

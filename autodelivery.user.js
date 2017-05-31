@@ -22,6 +22,30 @@ window.getRequest = function(planetid, resid) {
 	return (requests[planetid] || {})[resid] || 0;
 };
 
+// Compatibility for all possible versions (or absence) of autoroutes script
+if(typeof hubs === "undefined") window.hubs = {};
+if(typeof isHub === "undefined") {
+	window.isHub = function(resid, planetid) {
+		return hubs.hasOwnProperty(resid) && (hubs[resid][planetid] || hubs[resid] == planetid);
+	};
+}
+if(typeof getResourceHubs === "undefined") {
+	window.getResourceHubs = function(resid) {
+		var results = Array();
+		switch(typeof hubs[resid]) {
+		case "number":
+			results.push(hubs[resid]);
+			break;
+		case "object":
+			results = Object.values(hubs[resid]);
+			break;
+		}
+		return results.filter(function(p) {
+			return game.searchPlanet(p);
+		});
+	};
+}
+
 (function() {
 	'use strict';
 
@@ -361,8 +385,8 @@ window.getRequest = function(planetid, resid) {
 						};
 					}).filter(Boolean);
 					var hubMissions = excesses.map(function(v, k) {
-						if(!hubs || !hubs.hasOwnProperty(k) || hubs[k] == p) return false;
-						var locations = [ hubs[k] ];
+						if(isHub(k, p)) return false;
+						var locations = getResourceHubs(k);
 						return {
 							resource: k,
 							amount: v,
@@ -424,7 +448,7 @@ window.getRequest = function(planetid, resid) {
 						var transport = mission.resources.reduce(function(transport, v) {
 							var r = v.resource;
 							var maxAmount;
-							if(hubs && hubs[v.resource] == mission.planet) maxAmount = Infinity;
+							if(isHub(v.resource, mission.planet)) maxAmount = Infinity;
 							else maxAmount = (shortages[r] && shortages[r][mission.planet]) || 0;
 							maxAmount = Math.min(Math.ceil(maxAmount), Math.floor(planet.resources[r] - planetRequests[p][r]));
 							if(maxAmount == 0 || storageRes >= storageMax) {
@@ -491,7 +515,7 @@ window.getRequest = function(planetid, resid) {
 					}
 				}
 				for(var i in hubs) {
-					var hubReachable = [hubs[i]].filter(function(v) {
+					var hubReachable = getResourceHubs(i).filter(function(v) {
 						return planets[k].shortestPath[v] && k != v;
 					}).length;
 					if(excesses[i] > 0 && hubReachable) {
