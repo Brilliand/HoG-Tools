@@ -141,7 +141,7 @@ window.getShipsWanted = function(p, s) {
 		game.planets.map(function(p) {
 			var planet = planets[p];
 			if(planet.structure[buildingsName.shipyard].number === 0 || typeof shipsWanted[p] === "undefined") return;
-			if(!planet.shipyardFleet || planet.shipyardFleet.type !== "orbit") {
+			if(!planet.shipyardFleet || (planet.shipyardFleet.pushed && !Object.values(planet.fleets).includes(planet.shipyardFleet))) {
 				planet.shipyardFleet = new Fleet(game.id, "Empty Fleet");
 				planet.shipyardFleet.pushed = false;
 			}
