@@ -41,7 +41,7 @@
 
 		var calcData = {
 			ships: fleet.ships.reduce(function(obj, v, k) { if(v > 0) obj[k] = v; return obj; }, {}),
-			bonuses: ["artofwar"].reduce(function(obj, name) {
+			bonuses: ["artofwar", "karan_artofwar"].reduce(function(obj, name) {
 				var research = researches[researchesName[name]];
 				if(!research.requirement()) return obj;
 				obj[name] = research.level;
