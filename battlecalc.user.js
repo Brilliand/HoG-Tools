@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         HoG Tools - Battlecalc Link
 // @namespace    https://github.com/Brilliand/HoG-Tools
-// @version      1.0
+// @version      1.1
 // @description  Adds a link to the battle calculator on each player fleet near an enemy fleet
 // @author       Brilliand
 // @match        https://game274411.konggames.com/gamez/0027/4411/live/*
