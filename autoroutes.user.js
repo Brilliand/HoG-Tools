@@ -214,43 +214,26 @@ window.getResourceHubs = function(resid) {
 			}
 			return arr;
 		}, Array());
-		function dropWorstFleet() {
-			var droppableFleets = planetTransport.reduce(function(arr, v, k) {
-				Object.keys(v).map(function(p) {
-					var route = v[p];
-					arr.push({
-						from: k,
-						to: p,
-						route: route,
+		function enterCycle() {
+			var foundPlanet = planetTransport.map(function(v, k) {
+				return {
+					from: k,
+					to: Object.keys(v),
+				};
+			}).filter(function(v) { return v.to.length; })[0];
+			if(foundPlanet) {
+				var from = foundPlanet.from;
+				foundPlanet.to.map(function(to) {
+					planetQueue.push({
+						from: from,
+						to: to,
+						route: planetTransport[from][to],
 					});
 				});
-				return arr;
-			}, Array()).sort(function(a, b) { return a.route.time - b.route.time; });
-			while(droppableFleets.length) {
-				var entry = droppableFleets.pop();
-				if(!planetTransport[entry.from][entry.to]) continue;
-
-				entry.route.fleet.type = "normal";
-				delete planetTransport[entry.from][entry.to];
-				delete planetTransport[entry.to][entry.from];
-
-				var canContinue = false;
-				planetQueue = planetTransport.reduce(function(arr, v, k) {
-					if(Object.keys(v).length == 1) {
-						var planetid = Object.keys(v)[0];
-						var route = v[planetid];
-						arr.push({
-							from: k,
-							to: planetid,
-							route: route,
-						});
-						canContinue = true;
-					}
-					return arr;
-				}, planetQueue);
-				if(canContinue) return true;
+				return true;
+			} else {
+				return false;
 			}
-			return false;
 		}
 
 		var planetProduction = planets.map(function(planet) {
@@ -293,7 +276,7 @@ window.getResourceHubs = function(resid) {
 			return obj;
 		}, {});
 
-		for(var i = 0; i < planetQueue.length || dropWorstFleet(); i++) {
+		for(var i = 0; i < planetQueue.length || enterCycle(); i++) {
 			var entry = planetQueue[i];
 			if(!planetTransport[entry.from][entry.to]) continue;
 			var prod = planetProduction[entry.from];
