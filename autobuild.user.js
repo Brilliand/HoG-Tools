@@ -56,6 +56,32 @@ window.getBuildingsWanted = function(p, b) {
 	};
 	observer.observe(document.getElementById("building_list"), options);
 
+	function updateWantedDisplay(p, b) {
+		if(p != currentPlanet.id) return;
+		var planet = currentPlanet;
+		var box = $("#building_list").children("li").filter(function() {
+			return b == parseInt($(this).attr("name"));
+		});
+		if(box.length) {
+			var built = planet.structure[b];
+			var wantedTotal = (buildingsWanted[planet.id] || {})[b] || 0;
+			var indicator = box.find(".wanted_building_indicator");
+			if(wantedTotal > built.number) {
+				if(indicator.length) {
+					indicator.text(" / "+wantedTotal);
+				} else {
+					$(box[0].firstChild.firstChild).append(function() {
+						return $("<span>", {
+							class: "white_text wanted_building_indicator",
+						}).text(" / "+wantedTotal);
+					});
+				}
+			} else if(indicator.length) {
+				indicator.remove();
+			}
+		}
+	}
+
 	var shifted = false;
 	$(document).on('keyup keydown', function(e) {
 		shifted = e.shiftKey;
@@ -75,6 +101,7 @@ window.getBuildingsWanted = function(p, b) {
 				var success = old.buyStructure.call(this, b);
 				if(!success) break;
 			}
+			updateWantedDisplay(p, b);
 			return i;
 		};
 		planet.buyStructure = function(b) {
@@ -82,6 +109,7 @@ window.getBuildingsWanted = function(p, b) {
 				var oldWanted = planet.structure[b].number + getBuildingsWanted(p, b);
 				setBuildingLevelWanted(p, b, oldWanted + 1);
 				saveBuildingsWanted();
+				updateWantedDisplay(p, b);
 				return true;
 			} else {
 				return old.buyStructure.call(this, b);
@@ -92,6 +120,7 @@ window.getBuildingsWanted = function(p, b) {
 				var oldWanted = planet.structure[b].number + getBuildingsWanted(p, b);
 				setBuildingLevelWanted(p, b, oldWanted + a);
 				saveBuildingsWanted();
+				updateWantedDisplay(p, b);
 				return true;
 			} else {
 				return old.buyMultipleStructure.call(this, b, a, c);
@@ -102,6 +131,7 @@ window.getBuildingsWanted = function(p, b) {
 				var oldWanted = planet.structure[b].number + getBuildingsWanted(p, b);
 				setBuildingLevelWanted(p, b, oldWanted - 1);
 				saveBuildingsWanted();
+				updateWantedDisplay(p, b);
 				return oldWanted > planet.structure[b].number;
 			} else {
 				return old.sellStructure.call(this, b);
@@ -112,6 +142,7 @@ window.getBuildingsWanted = function(p, b) {
 				var oldWanted = planet.structure[b].number + getBuildingsWanted(p, b);
 				setBuildingLevelWanted(p, b, oldWanted - a);
 				saveBuildingsWanted();
+				updateWantedDisplay(p, b);
 				return oldWanted > planet.structure[b].number;
 			} else {
 				return old.sellMultipleStructure.call(this, b, a);
