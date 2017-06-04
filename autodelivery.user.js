@@ -19,7 +19,7 @@ window.setRequest = function(planetid, resid, quantity) {
 	}
 };
 window.getRequest = function(planetid, resid) {
-	return (requests[planetid] || {})[resid] || 0;
+	return ((requests[planetid] || {})[resid] || 0) + planets[planetid].resourcesRequest[resid];
 };
 
 // Compatibility for all possible versions (or absence) of autoroutes script

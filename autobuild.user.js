@@ -87,14 +87,14 @@ window.getBuildingsWanted = function(p, b) {
 				return old.buyStructure.call(this, b);
 			}
 		};
-		planet.buyMultipleStructure = function(b, a) {
-			if(shifted) {
+		planet.buyMultipleStructure = function(b, a, c) {
+			if(shifted && !c) {
 				var oldWanted = planet.structure[b].number + getBuildingsWanted(p, b);
 				setBuildingLevelWanted(p, b, oldWanted + a);
 				saveBuildingsWanted();
 				return true;
 			} else {
-				return old.buyMultipleStructure.call(this, b, a);
+				return old.buyMultipleStructure.call(this, b, a, c);
 			}
 		};
 		planet.sellStructure = function(b) {
