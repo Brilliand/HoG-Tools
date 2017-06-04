@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         HoG Tools - Building Queue
 // @namespace    https://github.com/Brilliand/HoG-Tools
-// @version      1.1
+// @version      1.2
 // @description  Automatically build queued buildings when the resources become available
 // @author       Brilliand
 // @match        https://game274411.konggames.com/gamez/0027/4411/live/*
