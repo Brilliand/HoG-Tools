@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         HoG Tools - Autoroute Manager
-// @namespace    https://github.com/Brilliand/HoG-Tools
+// @namespace    https://github.com/rubinen22/HoG-Tools
 // @version      1.6
 // @description  Provides automated autoroute handling with an arbitrary autoroute network and per-resource hubs
 // @author       Brilliand
