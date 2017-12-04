@@ -5,6 +5,7 @@
 // @description  Automatically build queued ships when the resources become available
 // @author       Brilliand
 // @match        https://game274411.konggames.com/gamez/0027/4411/live/*
+// @match        https://game288398.konggames.com/gamez/0028/8398/live/*
 // @grant        none
 // ==/UserScript==
 
