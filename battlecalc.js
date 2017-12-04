@@ -79,6 +79,7 @@ document.addEventListener("DOMContentLoaded", function() {
 			Piercing: (ship.piercing || 0),
 			Armor: ship.armor,
 			HP: ship.hp,
+			Shield: ship.shield,
 			"Piercing Power": ship.power * Math.min((ship.piercing || 0) / 100, 1),
 			Toughness: ship.hp / (1 - dmgred(ship.armor)),
 			Speed: ship.speed,
@@ -103,6 +104,8 @@ document.addEventListener("DOMContentLoaded", function() {
 				var result = {};
 				var shipDR = Math.min(shipStats.HP / shipStats.Toughness + (enemyShip.piercing || 0) / 100, 1);
 				var enemyDR = Math.min(1 - dmgred(enemyShip.armor * bonus.armor) + (shipStats.Piercing) / 100, 1);
+				if(ship.shield) shipDR *= (1 - ship.shield/Math.max(enemyShip.power, ship.shield));
+				if(enemyShip.shield) enemyDR *= (1 - enemyShip.shield/Math.max(ship.power, enemyShip.shield));
 				result.power = n * enemyShip.power * bonus.power;
 				result.harm = speedred(shipStats.Speed, enemyShip.speed * bonus.speed, shipStats.Weight) * result.power * shipDR / shipStats.HP;
 				result.toughness = n * enemyShip.hp / (1 - dmgred(enemyShip.armor * bonus.armor));
